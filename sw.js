@@ -1,4 +1,4 @@
-const CACHE = "qa-board-v53";
+const CACHE = "qa-board-v54";
 const PRECACHE = ["./", "./index.html", "./manifest.json", "./icon-180.png", "./icon-192.png"];
 let bellArm = null;
 
@@ -59,6 +59,26 @@ self.addEventListener("periodicsync", event => {
   event.waitUntil(Promise.resolve().then(() => {
     if (inSlot(bellArm)) return fireBell();
   }));
+});
+
+self.addEventListener("push", event => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) { data = { body: event.data && event.data.text() }; }
+  const title = data.title || "QA Board · tomorrow";
+  const body = data.body || (Array.isArray(data.lines) ? data.lines.join("\n") : "Tomorrow inspect");
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: "./icon-192.png",
+      badge: "./icon-192.png",
+      tag: data.tag || "qa-bell",
+      renotify: true,
+      requireInteraction: true,
+      data
+    }).then(() => self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+      list.forEach(c => c.postMessage({ type: "qa-bell-fire", payload: data }));
+    }))
+  );
 });
 
 self.addEventListener("notificationclick", event => {

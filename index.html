@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v53</title>
+  <title>Alpha QA — Inspection Board v54</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -562,7 +562,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v53 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v54 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -610,7 +610,7 @@
               </button>
               <div class="bell-panel" id="bellPanel">
                 <h3>Alerts</h3>
-                <p class="bell-note">On this page: pink job card bottom-right + chime until ×. Browser closed: web cannot draw a popup (no host). Use Add to Calendar so the phone OS alerts. Chrome/PWA can still ping if the OS keeps the app.</p>
+                <p class="bell-note">iPhone lock-screen: open QA Board from the Home Screen icon (not Safari tab) → ALERT ON → Allow. One OS ping per slot — Apple will not loop a chime on the lock screen. Worker URL empty = no lock-screen yet. Calendar still works as fallback.</p>
                 <div class="bell-row">
                   <label for="bellTime">Time</label>
                   <input id="bellTime" type="time" value="20:10" />
@@ -747,7 +747,7 @@
         </div>
       </div>
     </div>
-    <footer>v53. Alert popup bottom-right · chime until × · Add to Calendar if the browser is closed. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v54. Lock-screen from PWA via Cloudflare Worker. iPhone: Add to Home Screen, then ALERT ON. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -2320,6 +2320,55 @@
       paintArm();
       armBackground(cfg);
     }
+    function urlB64ToUint8(b64) {
+      const pad = "=".repeat((4 - b64.length % 4) % 4);
+      const raw = atob((b64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
+      const out = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+      return out;
+    }
+    function pushBase() {
+      return String(window.PUSH_URL || "").replace(/\/+$/, "");
+    }
+    function postPush(path, body) {
+      const base = pushBase();
+      if (!base) return Promise.resolve(null);
+      return fetch(base + path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body)
+      }).then(r => r.json().catch(() => null)).catch(() => null);
+    }
+    function subscribeLockScreen(cfg) {
+      const base = pushBase();
+      const vapid = String(window.VAPID_PUBLIC_KEY || "");
+      if (!base || !vapid) return Promise.resolve();
+      if (!("PushManager" in window) || !navigator.serviceWorker) return Promise.resolve();
+      return navigator.serviceWorker.ready.then(async reg => {
+        if (!reg.pushManager) return;
+        const perm = await Notification.requestPermission();
+        if (perm !== "granted") return;
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlB64ToUint8(vapid)
+          });
+        }
+        return postPush("/subscribe", {
+          pic: cfg.who || "all",
+          subscription: sub.toJSON(),
+          arm: {
+            on: !!cfg.on,
+            time: cfg.time,
+            times: cfg.times,
+            who: cfg.who,
+            conflict: cfg.conflict,
+            lines: jobLines(cfg)
+          }
+        });
+      }).catch(() => {});
+    }
     function armBackground(cfg) {
       if (!("Notification" in window)) return;
       if (Notification.permission === "default") Notification.requestPermission().catch(() => {});
@@ -2339,6 +2388,7 @@
           reg.periodicSync.register("qa-bell", { minInterval: 15 * 60 * 1000 }).catch(() => {});
         }
       }).catch(() => {});
+      subscribeLockScreen(cfg);
     }
     function bellSlots(cfg) {
       const parts = (cfg.time || "20:10").split(":");

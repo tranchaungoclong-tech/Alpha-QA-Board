@@ -9,5 +9,8 @@ v*-revision.md
 VERSIONS.md
 notify-server/node_modules/
 notify-server/data/
+cf-push/node_modules/
+cf-push/.wrangler/
+cf-push/.dev.vars
 .DS_Store
 Thumbs.db

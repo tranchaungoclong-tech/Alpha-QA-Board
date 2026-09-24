@@ -1,0 +1,18 @@
+name = "qa-board-push"
+main = "src/worker.js"
+compatibility_date = "2026-09-24"
+workers_dev = true
+
+[triggers]
+crons = ["* * * * *"]
+
+[vars]
+VAPID_PUBLIC_KEY = "BKusLhf3iGG_k_rleeQSkUosLJrk1gtptK-MLVVKdEhPdRNF1xQVQqMzYlV6qpHxKy095ytdvtyXdeVAbxmU4vU"
+VAPID_SUBJECT = "mailto:qa-board@alpha-fashion.local"
+SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRN1VuOjowpH_lX8LoyFOaXTQ97RDGMcUa4B_R031udAEPssjovgRHynFZVFQPPmRitFKopUZmUlAl5/pub?gid=2026108596&single=true&output=csv"
+BOARD_URL = "https://tranchaungoclong-tech.github.io/Alpha-QA-Board/"
+
+# Fill after: npx wrangler kv namespace create SUBS
+[[kv_namespaces]]
+binding = "SUBS"
+id = "REPLACE_AFTER_CREATE"
