@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v47</title>
+  <title>Alpha QA — Inspection Board v48</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -400,34 +400,42 @@
     }
     .form-plus { background: #2563EB; font-size: 26px; }
     .bell {
-      position: relative; background: #0F172A; font-size: 20px; border: 0; cursor: pointer;
+      position: relative; background: #EAB308; color: #BE123C; font-size: 20px; border: 0; cursor: pointer;
     }
-    .bell.on { background: #C33D27; }
+    .bell.on { background: #F43F5E; color: #fff; }
     .bell .dot {
-      position: absolute; top: 7px; right: 8px; width: 9px; height: 9px; border-radius: 50%;
-      background: #F43F5E; border: 2px solid #0F172A; display: none;
+      position: absolute; top: 6px; right: 7px; width: 9px; height: 9px; border-radius: 50%;
+      background: #BE123C; border: 2px solid #EAB308; display: none;
     }
+    .bell.on .dot { border-color: #F43F5E; background: #FEF08A; }
     .bell.has .dot { display: block; }
     .bell-dd { position: relative; }
     .bell-panel {
       display: none; position: absolute; z-index: 40; top: calc(100% + 6px); left: 0;
-      width: min(320px, 86vw); background: #fff; color: var(--ink);
-      border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow);
-      padding: 12px; text-align: left;
+      width: 220px; background: #fff; color: var(--ink);
+      border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow);
+      padding: 8px; text-align: left;
     }
     .bell-dd.open .bell-panel { display: block; }
-    .bell-panel h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
-    .bell-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: 13px; font-weight: 600; }
-    .bell-row label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+    .bell-panel h3 { margin: 0 0 6px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    .bell-row { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; font-size: 12px; font-weight: 600; }
+    .bell-row label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
     .bell-row select, .bell-row input[type="time"] {
-      border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
-      font: 600 14px "IBM Plex Sans", sans-serif; background: #fff; color: var(--ink);
+      border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px;
+      font: 600 12px "IBM Plex Sans", sans-serif; background: #fff; color: var(--ink);
     }
-    .bell-row.inline { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
-    .bell-note { font-size: 11px; color: var(--muted); line-height: 1.4; margin: 0 0 8px; }
+    .bell-row.inline { flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+    .bell-note { font-size: 10px; color: var(--muted); line-height: 1.3; margin: 0 0 6px; }
     .bell-test {
-      width: 100%; border: 0; background: #1E3A5F; color: #fff; border-radius: 8px;
-      padding: 8px 10px; font: 700 12px "IBM Plex Sans", sans-serif; cursor: pointer;
+      width: 100%; border: 0; background: #EAB308; color: #7F1D1D; border-radius: 6px;
+      padding: 6px 8px; font: 700 11px "IBM Plex Sans", sans-serif; cursor: pointer;
+    }
+    #bellToast {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 90;
+      background: #F43F5E; color: #fff; padding: 10px 14px; border-radius: 10px;
+      font: 700 13px "IBM Plex Sans", sans-serif; max-width: min(360px, 90vw);
+      white-space: pre-line; box-shadow: 0 10px 24px rgba(244,63,94,.35);
+      display: none;
     }
     .cal-tools .refresh:hover, .form-plus:hover, .bell:hover { filter: brightness(1.06); color: #fff; }
     .day-pop-head .form-plus {
@@ -547,7 +555,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v47 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v48 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -594,18 +602,18 @@
                 <i class="dot"></i>
               </button>
               <div class="bell-panel" id="bellPanel">
-                <h3>Alert settings</h3>
-                <p class="bell-note">In-page reminder of tomorrow’s jobs. Not lock-screen. Board must be open (or PWA on this phone).</p>
+                <h3>Alerts</h3>
+                <p class="bell-note">This phone clock. Board must stay open.</p>
                 <div class="bell-row inline">
-                  <label for="bellOn">Remind tomorrow’s jobs</label>
+                  <label for="bellOn">On</label>
                   <input id="bellOn" type="checkbox" />
                 </div>
                 <div class="bell-row">
-                  <label for="bellTime">Time (Vietnam)</label>
+                  <label for="bellTime">Time</label>
                   <input id="bellTime" type="time" value="20:10" />
                 </div>
                 <div class="bell-row">
-                  <label for="bellTimes">Times per evening</label>
+                  <label for="bellTimes">Times</label>
                   <select id="bellTimes">
                     <option value="1">1</option>
                     <option value="2">2</option>
@@ -613,17 +621,21 @@
                   </select>
                 </div>
                 <div class="bell-row">
-                  <label for="bellWho">Whose jobs</label>
+                  <label for="bellWho">PIC</label>
                   <select id="bellWho">
-                    <option value="this">This phone PIC</option>
                     <option value="all">All PICs</option>
+                    <option value="philip">Philip</option>
+                    <option value="elsa">Elsa</option>
+                    <option value="peter">Peter</option>
+                    <option value="frank">Frank</option>
+                    <option value="edith">Edith</option>
                   </select>
                 </div>
                 <div class="bell-row inline">
-                  <label for="bellConflict">Also ping overload / conflict</label>
+                  <label for="bellConflict">Conflicts</label>
                   <input id="bellConflict" type="checkbox" />
                 </div>
-                <button type="button" class="bell-test" id="bellTest">Test tonight’s list</button>
+                <button type="button" class="bell-test" id="bellTest">Test now</button>
               </div>
             </div>
           </div>
@@ -731,7 +743,7 @@
         </div>
       </div>
     </div>
-    <footer>v47. Pass / Fail chips are rings. Bell = in-page tomorrow reminder (not lock-screen). Stamp on ↻ until Sheet matches. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v48. Bell yellow/red. PIC droplist. Compact panel. Reminder uses this phone clock. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div class="day-pop" id="dayPop">
     <div class="day-pop-card" role="dialog" aria-modal="true">
@@ -2092,11 +2104,14 @@
     const BELL_LS = "qa-board-bell";
     const BELL_FIRED = "qa-board-bell-fired";
     function defaultBell() {
-      return { on: false, time: "20:10", times: 1, who: "this", conflict: true };
+      return { on: false, time: "20:10", times: 1, who: "all", conflict: true };
     }
     function loadBell() {
-      try { return Object.assign(defaultBell(), JSON.parse(localStorage.getItem(BELL_LS) || "{}")); }
-      catch (e) { return defaultBell(); }
+      try {
+        const raw = Object.assign(defaultBell(), JSON.parse(localStorage.getItem(BELL_LS) || "{}"));
+        if (raw.who === "this") raw.who = "all";
+        return raw;
+      } catch (e) { return defaultBell(); }
     }
     function saveBell(cfg) {
       localStorage.setItem(BELL_LS, JSON.stringify(cfg));
@@ -2106,7 +2121,8 @@
       $("bellOn").checked = !!cfg.on;
       $("bellTime").value = cfg.time || "20:10";
       $("bellTimes").value = String(cfg.times || 1);
-      $("bellWho").value = cfg.who === "all" ? "all" : "this";
+      const who = PEOPLE.some(p => p.id === cfg.who) ? cfg.who : "all";
+      $("bellWho").value = who;
       $("bellConflict").checked = cfg.conflict !== false;
       $("bellBtn").classList.toggle("on", !!cfg.on);
     }
@@ -2115,44 +2131,58 @@
         on: $("bellOn").checked,
         time: $("bellTime").value || "20:10",
         times: Number($("bellTimes").value) || 1,
-        who: $("bellWho").value,
+        who: $("bellWho").value || "all",
         conflict: $("bellConflict").checked
       };
     }
     function updateBellDot(n) {
       $("bellBtn").classList.toggle("has", n > 0);
     }
-    function tomorrowIso() {
-      const [y, m, d] = vnNow().date.split("-").map(Number);
-      const dt = new Date(y, m - 1, d + 1);
-      return iso(dt.getFullYear(), dt.getMonth(), dt.getDate());
+    function localClock() {
+      const n = new Date();
+      return {
+        date: iso(n.getFullYear(), n.getMonth(), n.getDate()),
+        hour: n.getHours(),
+        minute: n.getMinutes(),
+        mins: n.getHours() * 60 + n.getMinutes()
+      };
     }
-    function thisPhonePic() {
-      try { return localStorage.getItem("qa-board-pic") || ""; } catch (e) { return ""; }
+    function tomorrowIso() {
+      const n = new Date();
+      n.setDate(n.getDate() + 1);
+      return iso(n.getFullYear(), n.getMonth(), n.getDate());
     }
     function tomorrowJobs(cfg) {
       const day = tomorrowIso();
       return JOBS.filter(j => {
         if (j.date !== day) return false;
         if (j.type === "leave") return false;
-        if (cfg.who !== "all") {
-          const mine = thisPhonePic();
-          if (mine && j.pic !== mine) return false;
-        }
+        if (cfg.who && cfg.who !== "all" && j.pic !== cfg.who) return false;
         return true;
       });
     }
+    function conflictLine(cfg) {
+      if (!cfg.conflict) return "";
+      const day = tomorrowIso();
+      const list = JOBS.filter(j => j.date === day);
+      const m = dayMeta(list);
+      if (!m.warn) return "";
+      return m.overload ? "Overload tomorrow." : "Conflict tomorrow.";
+    }
     function bellListText(cfg) {
       const jobs = tomorrowJobs(cfg);
-      if (!jobs.length) return "No inspect tomorrow.";
-      return jobs.map(j => `${pic(j.pic).name} · ${j.factory || "leave"} · ${j.type}`).join("\n");
+      const extra = conflictLine(cfg);
+      if (!jobs.length && !extra) return "No inspect tomorrow.";
+      const who = cfg.who === "all" ? "All PICs" : (pic(cfg.who) ? pic(cfg.who).name : cfg.who);
+      const lines = [`Tomorrow · ${who}`].concat(jobs.map(j => `${pic(j.pic).name} · ${j.factory || "-"} · ${j.type}`));
+      if (extra) lines.push(extra);
+      return lines.join("\n");
     }
     function showBellToast(text) {
       let t = document.getElementById("bellToast");
       if (!t) {
         t = document.createElement("div");
         t.id = "bellToast";
-        t.style.cssText = "position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:80;background:#0F172A;color:#fff;padding:12px 16px;border-radius:12px;font:700 13px IBM Plex Sans,sans-serif;max-width:90vw;white-space:pre-line;box-shadow:0 10px 24px rgba(15,23,42,.25)";
         document.body.appendChild(t);
       }
       t.textContent = text;
@@ -2161,8 +2191,8 @@
       showBellToast._t = setTimeout(() => { t.style.display = "none"; }, 8000);
     }
     function bellSlots(cfg) {
-      const [h, mi] = (cfg.time || "20:10").split(":").map(Number);
-      const start = h * 60 + mi;
+      const parts = (cfg.time || "20:10").split(":");
+      const start = Number(parts[0]) * 60 + Number(parts[1] || 0);
       const n = Math.max(1, Math.min(3, cfg.times || 1));
       const out = [start];
       if (n >= 2) out.push(start + 30);
@@ -2173,14 +2203,13 @@
       const cfg = loadBell();
       $("bellBtn").classList.toggle("on", !!cfg.on);
       if (!cfg.on) return;
-      const now = vnNow();
-      const mins = now.hour * 60 + now.minute;
+      const now = localClock();
       const slots = bellSlots(cfg);
       let fired = {};
       try { fired = JSON.parse(localStorage.getItem(BELL_FIRED) || "{}"); } catch (e) { fired = {}; }
       if (fired.date !== now.date) fired = { date: now.date, slots: [] };
       slots.forEach((slot, i) => {
-        if (mins < slot || mins > slot + 4) return;
+        if (now.mins < slot || now.mins > slot + 1) return;
         if (fired.slots.indexOf(i) >= 0) return;
         fired.slots.push(i);
         localStorage.setItem(BELL_FIRED, JSON.stringify(fired));
@@ -2204,7 +2233,7 @@
       showBellToast(bellListText(loadBell()));
     };
     fillBellForm();
-    setInterval(tickBell, 30000);
+    setInterval(tickBell, 5000);
     tickBell();
     $("dayPopClose").onclick = ev => { ev.stopPropagation(); closeDayPop(); };
     $("dayPopPlus").onclick = ev => ev.stopPropagation();
