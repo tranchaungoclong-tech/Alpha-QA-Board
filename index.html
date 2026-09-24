@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v57</title>
+  <title>Alpha QA — Inspection Board v58</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -562,7 +562,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v57 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v58 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -610,7 +610,7 @@
               </button>
               <div class="bell-panel" id="bellPanel">
                 <h3>Alerts</h3>
-                <p class="bell-note">ALERT ON: one ding + Allow notifications. Pink card + ding-dong on this page at the time. iPhone lock-screen: open QA Board from the Home Screen icon (not Safari tab) → ALERT ON → Allow → lock the phone. One OS ping per slot on the lock screen.</p>
+                <p class="bell-note">ALERT ON: one ding + Allow. Pink card only while this page is open. Phone locked / other tab: OS banner from the Worker (this phone's clock). Open the Home Screen icon, not a Safari tab.</p>
                 <div class="bell-row">
                   <label for="bellTime">Time</label>
                   <input id="bellTime" type="time" value="20:10" />
@@ -747,7 +747,7 @@
         </div>
       </div>
     </div>
-    <footer>v57. Lock-screen Worker live: qa-board-push.tranchaungoclong.workers.dev. iPhone: Home Screen icon → ALERT ON → Allow. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v58. Push uses this phone's clock. Lock-screen banner if out of the app. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -762,7 +762,7 @@
   </div>
 
   <iframe name="qaFormSink" id="qaFormSink" title="form sink" style="position:absolute;width:0;height:0;border:0;visibility:hidden"></iframe>
-  <script src="sheet-config.js?v=57"></script>
+  <script src="sheet-config.js?v=58"></script>
   <script>
     const PEOPLE = [
       { id: "philip", name: "Philip", color: "#FB7185" },
@@ -2392,6 +2392,8 @@
         return postPush("/subscribe", {
           pic: cfg.who || "all",
           subscription: sub.toJSON(),
+          tzOffset: new Date().getTimezoneOffset(),
+          tz: (Intl.DateTimeFormat().resolvedOptions().timeZone) || "",
           arm: {
             on: !!cfg.on,
             time: cfg.time,
@@ -2484,8 +2486,9 @@
       downloadBellIcs(readBellForm());
     };
     fillBellForm();
-    setInterval(tickBell, 5000);
+    setInterval(tickBell, 2000);
     tickBell();
+    document.addEventListener("visibilitychange", () => { tickBell(); });
     $("dayPopClose").onclick = ev => { ev.stopPropagation(); closeDayPop(); };
     $("dayPopPlus").onclick = ev => ev.stopPropagation();
     $("dayPop").onclick = ev => { if (ev.target.id === "dayPop") closeDayPop(); };
