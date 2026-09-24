@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v48</title>
+  <title>Alpha QA — Inspection Board v49</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -426,17 +426,34 @@
     }
     .bell-row.inline { flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
     .bell-note { font-size: 10px; color: var(--muted); line-height: 1.3; margin: 0 0 6px; }
-    .bell-test {
-      width: 100%; border: 0; background: #EAB308; color: #7F1D1D; border-radius: 6px;
-      padding: 6px 8px; font: 700 11px "IBM Plex Sans", sans-serif; cursor: pointer;
+    .bell-arm {
+      width: 100%; border: 0; background: #22C55E; color: #fff; border-radius: 6px;
+      padding: 8px 8px; font: 800 12px "IBM Plex Sans", sans-serif; cursor: pointer;
+      letter-spacing: .04em;
     }
+    .bell-arm.off { background: #F43F5E; }
     #bellToast {
-      position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 90;
-      background: #F43F5E; color: #fff; padding: 10px 14px; border-radius: 10px;
-      font: 700 13px "IBM Plex Sans", sans-serif; max-width: min(360px, 90vw);
-      white-space: pre-line; box-shadow: 0 10px 24px rgba(244,63,94,.35);
+      position: fixed; top: 16px; right: 16px; left: auto; transform: none; z-index: 90;
+      width: min(380px, calc(100vw - 24px)); max-height: calc(100vh - 32px); overflow: auto;
+      background: #fff; color: var(--ink); padding: 14px 14px 12px; border-radius: 14px;
+      border: 1px solid #FECACA; box-shadow: 0 18px 40px rgba(15,23,42,.18);
       display: none;
     }
+    #bellToast .ht { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    #bellToast .ht b { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: #BE123C; }
+    #bellToast .ht button {
+      border: 0; background: #F1F5F9; width: 28px; height: 28px; border-radius: 14px;
+      font-size: 18px; line-height: 1; cursor: pointer; color: var(--ink);
+    }
+    #bellToast .when { font-size: 12px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+    #bellToast .job {
+      border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin-bottom: 6px;
+      background: #F8FAFC;
+    }
+    #bellToast .job .who { font-weight: 800; font-size: 14px; }
+    #bellToast .job .meta { font-size: 12px; color: var(--ink); margin-top: 2px; line-height: 1.35; }
+    #bellToast .empty { font-size: 13px; color: var(--muted); }
+    #bellToast .warn { font-size: 12px; color: #BE123C; font-weight: 700; margin-top: 4px; }
     .cal-tools .refresh:hover, .form-plus:hover, .bell:hover { filter: brightness(1.06); color: #fff; }
     .day-pop-head .form-plus {
       width: 40px; height: 40px; border-radius: 20px; font-size: 26px;
@@ -555,7 +572,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v48 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v49 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -603,11 +620,7 @@
               </button>
               <div class="bell-panel" id="bellPanel">
                 <h3>Alerts</h3>
-                <p class="bell-note">This phone clock. Board must stay open.</p>
-                <div class="bell-row inline">
-                  <label for="bellOn">On</label>
-                  <input id="bellOn" type="checkbox" />
-                </div>
+                <p class="bell-note">This phone clock. Board must stay open. Repeats every 15 min.</p>
                 <div class="bell-row">
                   <label for="bellTime">Time</label>
                   <input id="bellTime" type="time" value="20:10" />
@@ -635,7 +648,7 @@
                   <label for="bellConflict">Conflicts</label>
                   <input id="bellConflict" type="checkbox" />
                 </div>
-                <button type="button" class="bell-test" id="bellTest">Test now</button>
+                <button type="button" class="bell-arm" id="bellArm">ALERT ON</button>
               </div>
             </div>
           </div>
@@ -743,8 +756,9 @@
         </div>
       </div>
     </div>
-    <footer>v48. Bell yellow/red. PIC droplist. Compact panel. Reminder uses this phone clock. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v49. ALERT ON button. Repeats every 15 min. Card top-right with factory / type / PIC. Chime fades. Live: github.io/Alpha-QA-Board/</footer>
   </div>
+  <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
     <div class="day-pop-card" role="dialog" aria-modal="true">
       <div class="day-pop-head">
@@ -2103,6 +2117,7 @@
 
     const BELL_LS = "qa-board-bell";
     const BELL_FIRED = "qa-board-bell-fired";
+    const TYPE_LABEL = { inline: "Inline", final: "Final", sourcing: "Sourcing", audit: "Audit", leave: "Leave" };
     function defaultBell() {
       return { on: false, time: "20:10", times: 1, who: "all", conflict: true };
     }
@@ -2116,19 +2131,26 @@
     function saveBell(cfg) {
       localStorage.setItem(BELL_LS, JSON.stringify(cfg));
     }
+    function paintArm() {
+      const cfg = loadBell();
+      const on = !!cfg.on;
+      $("bellBtn").classList.toggle("on", on);
+      const arm = $("bellArm");
+      arm.textContent = on ? "ALERT OFF" : "ALERT ON";
+      arm.classList.toggle("off", on);
+    }
     function fillBellForm() {
       const cfg = loadBell();
-      $("bellOn").checked = !!cfg.on;
       $("bellTime").value = cfg.time || "20:10";
       $("bellTimes").value = String(cfg.times || 1);
-      const who = PEOPLE.some(p => p.id === cfg.who) ? cfg.who : "all";
-      $("bellWho").value = who;
+      $("bellWho").value = PEOPLE.some(p => p.id === cfg.who) ? cfg.who : "all";
       $("bellConflict").checked = cfg.conflict !== false;
-      $("bellBtn").classList.toggle("on", !!cfg.on);
+      paintArm();
     }
     function readBellForm() {
+      const prev = loadBell();
       return {
-        on: $("bellOn").checked,
+        on: !!prev.on,
         time: $("bellTime").value || "20:10",
         times: Number($("bellTimes").value) || 1,
         who: $("bellWho").value || "all",
@@ -2142,8 +2164,6 @@
       const n = new Date();
       return {
         date: iso(n.getFullYear(), n.getMonth(), n.getDate()),
-        hour: n.getHours(),
-        minute: n.getMinutes(),
         mins: n.getHours() * 60 + n.getMinutes()
       };
     }
@@ -2163,45 +2183,75 @@
     }
     function conflictLine(cfg) {
       if (!cfg.conflict) return "";
-      const day = tomorrowIso();
-      const list = JOBS.filter(j => j.date === day);
+      const list = JOBS.filter(j => j.date === tomorrowIso());
       const m = dayMeta(list);
       if (!m.warn) return "";
       return m.overload ? "Overload tomorrow." : "Conflict tomorrow.";
     }
-    function bellListText(cfg) {
+    function playChime() {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        const ctx = playChime.ctx || (playChime.ctx = new Ctx());
+        if (ctx.state === "suspended") ctx.resume();
+        const now = ctx.currentTime;
+        [880, 1174, 988].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const g = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.value = freq;
+          const t0 = now + i * 0.18;
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.85);
+          osc.connect(g); g.connect(ctx.destination);
+          osc.start(t0); osc.stop(t0 + 0.9);
+        });
+      } catch (e) {}
+    }
+    function showBellCard(cfg) {
+      const t = $("bellToast");
+      const day = tomorrowIso();
       const jobs = tomorrowJobs(cfg);
       const extra = conflictLine(cfg);
-      if (!jobs.length && !extra) return "No inspect tomorrow.";
       const who = cfg.who === "all" ? "All PICs" : (pic(cfg.who) ? pic(cfg.who).name : cfg.who);
-      const lines = [`Tomorrow · ${who}`].concat(jobs.map(j => `${pic(j.pic).name} · ${j.factory || "-"} · ${j.type}`));
-      if (extra) lines.push(extra);
-      return lines.join("\n");
-    }
-    function showBellToast(text) {
-      let t = document.getElementById("bellToast");
-      if (!t) {
-        t = document.createElement("div");
-        t.id = "bellToast";
-        document.body.appendChild(t);
-      }
-      t.textContent = text;
+      const [y, m, d] = day.split("-").map(Number);
+      const when = `${SHORT[m - 1]} ${d} · ${who}`;
+      const rows = jobs.length
+        ? jobs.map(j => {
+            const p = pic(j.pic);
+            const type = TYPE_LABEL[j.type] || j.type;
+            const bits = [
+              j.factory ? `Factory ${j.factory}` : "",
+              j.customer ? `Client ${j.customer}` : "",
+              type,
+              j.days ? `${fmt(j.days)}d` : ""
+            ].filter(Boolean).join(" · ");
+            return `<div class="job"><div class="who">${p ? p.name : j.pic}</div><div class="meta">${bits || "Visit"}</div></div>`;
+          }).join("")
+        : `<div class="empty">No inspect tomorrow.</div>`;
+      t.innerHTML = `<div class="ht"><b>Tomorrow</b><button type="button" id="bellToastX" aria-label="Close">×</button></div>
+        <div class="when">${when}</div>
+        ${rows}
+        ${extra ? `<div class="warn">${extra}</div>` : ""}`;
       t.style.display = "block";
-      clearTimeout(showBellToast._t);
-      showBellToast._t = setTimeout(() => { t.style.display = "none"; }, 8000);
+      const x = $("bellToastX");
+      if (x) x.onclick = () => { t.style.display = "none"; };
+      playChime();
+      clearTimeout(showBellCard._t);
+      showBellCard._t = setTimeout(() => { t.style.display = "none"; }, 20000);
     }
     function bellSlots(cfg) {
       const parts = (cfg.time || "20:10").split(":");
       const start = Number(parts[0]) * 60 + Number(parts[1] || 0);
       const n = Math.max(1, Math.min(3, cfg.times || 1));
-      const out = [start];
-      if (n >= 2) out.push(start + 30);
-      if (n >= 3) out.push(start + 60);
+      const out = [];
+      for (let i = 0; i < n; i++) out.push(start + i * 15);
       return out;
     }
     function tickBell() {
       const cfg = loadBell();
-      $("bellBtn").classList.toggle("on", !!cfg.on);
+      paintArm();
       if (!cfg.on) return;
       const now = localClock();
       const slots = bellSlots(cfg);
@@ -2213,7 +2263,7 @@
         if (fired.slots.indexOf(i) >= 0) return;
         fired.slots.push(i);
         localStorage.setItem(BELL_FIRED, JSON.stringify(fired));
-        showBellToast(bellListText(cfg));
+        showBellCard(cfg);
       });
     }
     $("bellBtn").onclick = ev => {
@@ -2221,16 +2271,31 @@
       $("bellDd").classList.toggle("open");
     };
     $("bellPanel").onclick = ev => ev.stopPropagation();
-    ["bellOn", "bellTime", "bellTimes", "bellWho", "bellConflict"].forEach(id => {
+    ["bellTime", "bellTimes", "bellWho", "bellConflict"].forEach(id => {
       $(id).onchange = () => {
         const cfg = readBellForm();
         saveBell(cfg);
-        $("bellBtn").classList.toggle("on", !!cfg.on);
+        paintArm();
       };
     });
-    $("bellTest").onclick = ev => {
+    $("bellArm").onclick = ev => {
       ev.stopPropagation();
-      showBellToast(bellListText(loadBell()));
+      const cfg = readBellForm();
+      cfg.on = !loadBell().on;
+      saveBell(cfg);
+      paintArm();
+      if (cfg.on) {
+        try {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          if (Ctx) {
+            playChime.ctx = playChime.ctx || new Ctx();
+            if (playChime.ctx.state === "suspended") playChime.ctx.resume();
+          }
+        } catch (e) {}
+        showBellCard(cfg);
+      } else {
+        $("bellToast").style.display = "none";
+      }
     };
     fillBellForm();
     setInterval(tickBell, 5000);
