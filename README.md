@@ -2,7 +2,7 @@
 
 Staff calendar: who inspects, 1 or ½ day, factory, customer, inline vs final.
 
-**Live board:** https://tranchaungoclong-tech.github.io/alpha-qa-inspection-board/
+**Live board:** https://tranchaungoclong-tech.github.io/Alpha-QA-Board/
 
 ## How the team uses it
 
@@ -16,7 +16,7 @@ Do **not** edit this GitHub repo to add inspections. GitHub only hosts the page.
 
 | File | Role |
 | --- | --- |
-| `index.html` | Board (v46 — stamp stays on ↻ until Sheet has it; Leave rows off charts; centered web popup; green ↻ + blue Form +) |
+| `index.html` | Board (v47 — Pass/Fail filter rings; bell next to ↻/+; stamp stays on ↻ until Sheet has it) |
 | `sheet-config.js` | Published CSV URL + Form URL |
 | `sw.js` / `manifest.json` | Offline cache of the last visit |
 | `SHEET.md` | Form → CSV → Pages |

@@ -1,4 +1,4 @@
-const CACHE = "qa-board-v46";
+const CACHE = "qa-board-v47";
 const PRECACHE = ["./", "./index.html", "./manifest.json", "./icon-180.png", "./icon-192.png"];
 
 self.addEventListener("install", event => {
