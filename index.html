@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v51</title>
+  <title>Alpha QA — Inspection Board v52</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -142,22 +142,6 @@
     .chip.type.on { background: #EA580C; }
     .chip.result { background: #0EA5E9; }
     .chip.result.on { background: #0284C7; }
-    .chip.pf-chip {
-      display: inline-flex; align-items: center; justify-content: center;
-      background: transparent; padding: 0; border-radius: 999px;
-      box-shadow: none;
-    }
-    .chip.pf-chip.on { box-shadow: none; }
-    .chip.pf-chip.pass.on .mini-ring-wrap b { color: #BBF7D0; }
-    .chip.pf-chip.fail.on .mini-ring-wrap b { color: #FECDD3; }
-    .chip.pf-chip .mini-ring-wrap {
-      position: relative; width: 54px; height: 54px; flex: 0 0 auto;
-    }
-    .chip.pf-chip .mini-ring { width: 54px; height: 54px; display: block; }
-    .chip.pf-chip .mini-ring-wrap b {
-      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 800; color: #fff; letter-spacing: .02em;
-    }
     .chip.warn { background: #E11D48; color: #fff; }
     .chip.warn.on { background: #BE123C; }
     .chip.leave { background: #EAB308; color: #1C1917; }
@@ -512,9 +496,6 @@
         border-radius: 6px;
       }
       .chip.name, .chip.all { font-size: 12px; padding: 6px 10px; }
-      .chip.pf-chip { padding: 0; }
-      .chip.pf-chip .mini-ring-wrap, .chip.pf-chip .mini-ring { width: 46px; height: 46px; }
-      .chip.pf-chip .mini-ring-wrap b { font-size: 10px; }
       select.chip { padding-right: 22px; background-position: right 6px center; }
       .pic-search { font-size: 16px; }
       .weekdays, .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
@@ -573,7 +554,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v51 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v52 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -757,7 +738,7 @@
         </div>
       </div>
     </div>
-    <footer>v51. Filter Pass/Fail: ring around the word, no %. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v52. Filter Pass/Fail: v45 square chips. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -1349,18 +1330,8 @@
         <button class="chip type ${f.type==="final"?"on":""}" data-k="type" data-v="final">Final</button>
         <button class="chip type ${f.type==="sourcing"?"on":""}" data-k="type" data-v="sourcing">Sourcing</button>
         <button class="chip type ${f.type==="audit"?"on":""}" data-k="type" data-v="audit">Audit</button>
-        <button class="chip pf-chip pass ${f.result==="pass"?"on":""}" data-k="result" data-v="pass" title="Pass">
-          <span class="mini-ring-wrap">
-            <svg class="mini-ring" id="passChipRing" viewBox="0 0 64 64"></svg>
-            <b>Pass</b>
-          </span>
-        </button>
-        <button class="chip pf-chip fail ${f.result==="fail"?"on":""}" data-k="result" data-v="fail" title="Fail">
-          <span class="mini-ring-wrap">
-            <svg class="mini-ring" id="failChipRing" viewBox="0 0 64 64"></svg>
-            <b>Fail</b>
-          </span>
-        </button>
+        <button class="chip result ${f.result==="pass"?"on":""}" data-k="result" data-v="pass">Pass</button>
+        <button class="chip result ${f.result==="fail"?"on":""}" data-k="result" data-v="fail">Fail</button>
         <button class="chip leave ${f.leave||f.type==="leave"?"on":""}" data-k="leave" data-v="1">Annual leave</button>
         <button class="chip warn ${f.conflicts?"on":""}" data-k="conflicts" data-v="1">Conflicts / overload</button>
         <select class="chip ${f.customer!=="all"?"on":""}" id="custSel"><option value="all">All clients</option>${clients.map(c=>`<option value="${c}" ${f.customer===c?"selected":""}>${c}</option>`).join("")}</select>
@@ -1743,8 +1714,6 @@
       const failPct = total ? Math.round(bag.Fail / total * 100) : null;
       paintRing("passRing", "passPct", passPct, "#22C55E");
       paintRing("failRing", "failPct", failPct, "#F43F5E");
-      paintRing("passChipRing", null, passPct, "#22C55E");
-      paintRing("failChipRing", null, failPct, "#F43F5E");
       $("passKpi").classList.toggle("on", f.result === "pass");
       $("failKpi").classList.toggle("on", f.result === "fail");
       $("passKpi").title = total ? `${bag.Pass} pass / ${total} closed` : "no closed jobs";
