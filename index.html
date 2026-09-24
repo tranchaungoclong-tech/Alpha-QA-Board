@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v55</title>
+  <title>Alpha QA — Inspection Board v56</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -562,7 +562,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v55 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v56 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -610,7 +610,7 @@
               </button>
               <div class="bell-panel" id="bellPanel">
                 <h3>Alerts</h3>
-                <p class="bell-note">ALERT ON arms the clock — the pink card and doorbell play only at the time you set. × stops the sound. Closed browser / other browser: lock-screen from the Home Screen PWA after the Worker URL is live. Calendar is the fallback until then.</p>
+                <p class="bell-note">ALERT ON: one ding to open the speaker, then wait. Pink card + ding-dong loop only at the time. Keep this Chrome window (any tab). Other browser / closed Chrome = no ping until Worker URL is live.</p>
                 <div class="bell-row">
                   <label for="bellTime">Time</label>
                   <input id="bellTime" type="time" value="20:10" />
@@ -747,7 +747,7 @@
         </div>
       </div>
     </div>
-    <footer>v55. Popup + doorbell only at the set time. × stops the chime. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v56. ALERT ON unlocks the speaker (one ding). Card + loop at the set time. Other browser still needs Worker URL. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -2177,24 +2177,26 @@
         return playChime.ctx;
       } catch (e) { return null; }
     }
-    function ding(ctx, t0, freq, dur, peak) {
+    function ding(ctx, t0, freq, dur, peak, type) {
       const osc = ctx.createOscillator();
       const g = ctx.createGain();
-      osc.type = "sine";
+      osc.type = type || "sine";
       osc.frequency.setValueAtTime(freq, t0);
-      osc.frequency.exponentialRampToValueAtTime(freq * 0.92, t0 + dur);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(80, freq * 0.88), t0 + dur);
       g.gain.setValueAtTime(0.0001, t0);
-      g.gain.exponentialRampToValueAtTime(peak, t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(peak, t0 + 0.02);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
       osc.connect(g); g.connect(ctx.destination);
-      osc.start(t0); osc.stop(t0 + dur + 0.02);
+      osc.start(t0); osc.stop(t0 + dur + 0.04);
     }
     function playChimeOnce() {
       const ctx = ensureAudio();
       if (!ctx) return;
       const t0 = ctx.currentTime;
-      ding(ctx, t0, 784, 0.55, 0.11);
-      ding(ctx, t0 + 0.22, 523.25, 0.85, 0.09);
+      ding(ctx, t0, 784, 0.42, 0.28, "sine");
+      ding(ctx, t0, 784, 0.42, 0.08, "triangle");
+      ding(ctx, t0 + 0.28, 523.25, 0.7, 0.24, "sine");
+      ding(ctx, t0 + 0.28, 523.25, 0.7, 0.07, "triangle");
     }
     function startChimeLoop() {
       if (chimeLoop) return;
@@ -2302,6 +2304,35 @@
       if (x) x.onclick = ev => { ev.stopPropagation(); silenceAlarm(); };
       ensureAudio();
       startChimeLoop();
+      pingOsToast(cfg);
+    }
+    function pingOsToast(cfg) {
+      if (!("Notification" in window)) return;
+      if (Notification.permission !== "granted") return;
+      const lines = jobLines(cfg);
+      try {
+        const n = new Notification("QA Board · tomorrow", {
+          body: lines.slice(0, 4).join("\n"),
+          icon: "./icon-192.png",
+          tag: "qa-bell",
+          renotify: true,
+          requireInteraction: true
+        });
+        n.onclick = () => { try { window.focus(); } catch (e) {} n.close(); };
+      } catch (e) {}
+      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready.then(reg => {
+          if (reg.showNotification) {
+            return reg.showNotification("QA Board · tomorrow", {
+              body: lines.slice(0, 4).join("\n"),
+              icon: "./icon-192.png",
+              tag: "qa-bell",
+              renotify: true,
+              requireInteraction: true
+            });
+          }
+        }).catch(() => {});
+      }
     }
     function silenceAlarm() {
       stopChimeLoop();
@@ -2411,7 +2442,7 @@
       try { fired = JSON.parse(localStorage.getItem(BELL_FIRED) || "{}"); } catch (e) { fired = {}; }
       if (fired.date !== now.date) fired = { date: now.date, slots: [] };
       slots.forEach((slot, i) => {
-        if (now.mins < slot || now.mins > slot + 1) return;
+        if (now.mins < slot || now.mins > slot + 14) return;
         if (fired.slots.indexOf(i) >= 0) return;
         fired.slots.push(i);
         localStorage.setItem(BELL_FIRED, JSON.stringify(fired));
@@ -2438,7 +2469,12 @@
       paintArm();
       if (cfg.on) {
         ensureAudio();
+        playChimeOnce();
+        if ("Notification" in window && Notification.permission === "default") {
+          Notification.requestPermission().catch(() => {});
+        }
         armBackground(cfg);
+        tickBell();
       } else {
         turnAlertOff();
       }
