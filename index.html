@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v59</title>
+  <title>Alpha QA — Inspection Board v60</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -566,7 +566,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v59 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v60 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -614,7 +614,7 @@
               </button>
               <div class="bell-panel" id="bellPanel">
                 <h3>Alerts</h3>
-                <p class="bell-note">ALERT ON: one ring + Allow. At the time: one pink job card (like the day cell) + phone ring until ×. No extra Chrome toasts on this PC.</p>
+                <p class="bell-note">ALERT ON may open a small floating window (Chrome). Other Chrome tabs: that pink card + ring. iPhone lock-screen: OS banner only — Apple will not draw the pink card while the app is killed.</p>
                 <div class="bell-row">
                   <label for="bellTime">Time</label>
                   <input id="bellTime" type="time" value="20:10" />
@@ -751,7 +751,7 @@
         </div>
       </div>
     </div>
-    <footer>v59. One pink job card. Phone-ring tone until ×. No duplicate Chrome toasts. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v60. Chrome other tab: floating pink card + ring. iPhone lock: OS banner (open app for pink card + ring). Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -766,7 +766,7 @@
   </div>
 
   <iframe name="qaFormSink" id="qaFormSink" title="form sink" style="position:absolute;width:0;height:0;border:0;visibility:hidden"></iframe>
-  <script src="sheet-config.js?v=59"></script>
+  <script src="sheet-config.js?v=60"></script>
   <script>
     const PEOPLE = [
       { id: "philip", name: "Philip", color: "#FB7185" },
@@ -2308,11 +2308,68 @@
       if (x) x.onclick = ev => { ev.stopPropagation(); silenceAlarm(); };
       ensureAudio();
       startChimeLoop();
+      paintBellPip(cfg);
+      if (!window.documentPictureInPicture) pingOsToast(cfg);
+    }
+    function pingOsToast(cfg) {
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+      if (document.visibilityState === "visible") return;
+      const lines = jobLines(cfg);
+      try {
+        const n = new Notification("QA Board · tomorrow", {
+          body: lines.slice(0, 4).join("\n"),
+          icon: "./icon-192.png",
+          tag: "qa-bell",
+          renotify: true,
+          requireInteraction: true
+        });
+        n.onclick = () => { try { window.focus(); } catch (e) {} n.close(); };
+      } catch (e) {}
+    }
+    function bellCardHtml(cfg) {
+      const jobs = tomorrowJobs(cfg);
+      const extra = conflictLine(cfg);
+      const rows = jobs.length
+        ? jobs.map(j => {
+            const p = pic(j.pic);
+            const sm = stampMeta(j.result);
+            const dur = j.days === 1 ? "1d" : "½d";
+            const type = TYPE_LABEL[j.type] || j.type;
+            const tint = TINT[j.pic] || "#FFE4E6";
+            const edge = p && p.color ? p.color : "#FB7185";
+            return `<div style="background:${tint};border-left:5px solid ${edge};border-radius:14px;padding:10px 12px;margin:0 0 8px;font:14px/1.35 'IBM Plex Sans',sans-serif">
+              <b style="display:block;font-size:16px">${p ? p.name : j.pic} <span style="color:#64748B;font-weight:600">(${dur})</span></b>
+              <div style="color:#475569;font-size:13px;margin-top:4px">🏭 ${j.factory || "-"} &nbsp;👤 ${j.customer || "-"}</div>
+              <div style="color:#475569;font-size:13px;margin-top:2px">📌 ${type} | ${sm.label}</div>
+            </div>`;
+          }).join("")
+        : `<div style="padding:12px;color:#64748B">No inspect tomorrow.</div>`;
+      return `${rows}${extra ? `<div style="color:#BE123C;font-weight:700;font-size:12px">${extra}</div>` : ""}`;
+    }
+    function paintBellPip(cfg) {
+      const pip = window.__bellPip;
+      if (!pip || pip.closed) return;
+      const box = pip.document.getElementById("pipCard");
+      if (box) box.innerHTML = bellCardHtml(cfg);
+    }
+    async function openBellPip() {
+      if (!window.documentPictureInPicture) return;
+      if (window.__bellPip && !window.__bellPip.closed) return;
+      try {
+        const pip = await documentPictureInPicture.requestWindow({ width: 320, height: 220 });
+        window.__bellPip = pip;
+        pip.document.head.innerHTML = `<style>body{margin:0;background:#fff;font-family:'IBM Plex Sans',sans-serif}</style>`;
+        pip.document.body.innerHTML = `<div id="pipCard" style="padding:10px"></div>`;
+        pip.addEventListener("pagehide", () => { window.__bellPip = null; });
+        paintBellPip(loadBell());
+      } catch (e) {}
     }
     function silenceAlarm() {
       stopChimeLoop();
       const t = $("bellToast");
       if (t) t.style.display = "none";
+      try { if (window.__bellPip && !window.__bellPip.closed) window.__bellPip.close(); } catch (e) {}
+      window.__bellPip = null;
       if (navigator.serviceWorker && navigator.serviceWorker.ready) {
         navigator.serviceWorker.ready.then(reg => {
           if (reg.getNotifications) {
@@ -2451,6 +2508,7 @@
           Notification.requestPermission().catch(() => {});
         }
         armBackground(cfg);
+        openBellPip();
         tickBell();
       } else {
         turnAlertOff();
