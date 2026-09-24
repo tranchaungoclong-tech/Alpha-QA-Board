@@ -1,4 +1,4 @@
-const CACHE = "qa-board-v60";
+const CACHE = "qa-board-v61";
 const PRECACHE = ["./", "./index.html", "./manifest.json", "./icon-180.png", "./icon-192.png"];
 let bellArm = null;
 
@@ -32,7 +32,7 @@ function inSlot(arm) {
   const n = Math.max(1, Math.min(3, Number(arm.times) || 1));
   for (let i = 0; i < n; i++) {
     const slot = start + i * 15;
-    if (mins >= slot && mins <= slot + 14) return true;
+    if (mins >= slot && mins <= slot + 2) return true;
   }
   return false;
 }

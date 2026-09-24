@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v60</title>
+  <title>Alpha QA — Inspection Board v61</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -566,7 +566,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v60 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v61 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -614,7 +614,7 @@
               </button>
               <div class="bell-panel" id="bellPanel">
                 <h3>Alerts</h3>
-                <p class="bell-note">ALERT ON may open a small floating window (Chrome). Other Chrome tabs: that pink card + ring. iPhone lock-screen: OS banner only — Apple will not draw the pink card while the app is killed.</p>
+                <p class="bell-note">ALERT ON only arms the clock (one ring to open the speaker). The pink card appears at the set time — one card. Other Chrome tab: floating card then. iPhone lock: OS banner.</p>
                 <div class="bell-row">
                   <label for="bellTime">Time</label>
                   <input id="bellTime" type="time" value="20:10" />
@@ -751,7 +751,7 @@
         </div>
       </div>
     </div>
-    <footer>v60. Chrome other tab: floating pink card + ring. iPhone lock: OS banner (open app for pink card + ring). Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v61. ALERT ON arms only. One pink card at the set time. Floating window only on other Chrome tabs. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -766,7 +766,7 @@
   </div>
 
   <iframe name="qaFormSink" id="qaFormSink" title="form sink" style="position:absolute;width:0;height:0;border:0;visibility:hidden"></iframe>
-  <script src="sheet-config.js?v=60"></script>
+  <script src="sheet-config.js?v=61"></script>
   <script>
     const PEOPLE = [
       { id: "philip", name: "Philip", color: "#FB7185" },
@@ -2308,8 +2308,10 @@
       if (x) x.onclick = ev => { ev.stopPropagation(); silenceAlarm(); };
       ensureAudio();
       startChimeLoop();
-      paintBellPip(cfg);
-      if (!window.documentPictureInPicture) pingOsToast(cfg);
+      if (document.visibilityState !== "visible") {
+        openBellPip().then(() => paintBellPip(cfg));
+        pingOsToast(cfg);
+      }
     }
     function pingOsToast(cfg) {
       if (!("Notification" in window) || Notification.permission !== "granted") return;
@@ -2476,7 +2478,7 @@
       try { fired = JSON.parse(localStorage.getItem(BELL_FIRED) || "{}"); } catch (e) { fired = {}; }
       if (fired.date !== now.date) fired = { date: now.date, slots: [] };
       slots.forEach((slot, i) => {
-        if (now.mins < slot || now.mins > slot + 14) return;
+        if (now.mins < slot || now.mins > slot + 2) return;
         if (fired.slots.indexOf(i) >= 0) return;
         fired.slots.push(i);
         localStorage.setItem(BELL_FIRED, JSON.stringify(fired));
@@ -2502,14 +2504,17 @@
       saveBell(cfg);
       paintArm();
       if (cfg.on) {
+        const t = $("bellToast");
+        if (t) t.style.display = "none";
+        try { if (window.__bellPip && !window.__bellPip.closed) window.__bellPip.close(); } catch (e) {}
+        window.__bellPip = null;
+        stopChimeLoop();
         ensureAudio();
         playChimeOnce();
         if ("Notification" in window && Notification.permission === "default") {
           Notification.requestPermission().catch(() => {});
         }
         armBackground(cfg);
-        openBellPip();
-        tickBell();
       } else {
         turnAlertOff();
       }
