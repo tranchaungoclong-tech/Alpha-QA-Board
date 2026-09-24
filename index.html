@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v49</title>
+  <title>Alpha QA — Inspection Board v50</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -572,7 +572,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v49 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v50 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -620,7 +620,7 @@
               </button>
               <div class="bell-panel" id="bellPanel">
                 <h3>Alerts</h3>
-                <p class="bell-note">This phone clock. Board must stay open. Repeats every 15 min.</p>
+                <p class="bell-note">Chime loops until ALERT OFF. Chrome / PWA can ping with the tab in the background. iPhone Safari tab closed = no sound.</p>
                 <div class="bell-row">
                   <label for="bellTime">Time</label>
                   <input id="bellTime" type="time" value="20:10" />
@@ -756,7 +756,7 @@
         </div>
       </div>
     </div>
-    <footer>v49. ALERT ON button. Repeats every 15 min. Card top-right with factory / type / PIC. Chime fades. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v50. Chime loops until ALERT OFF. Chrome/PWA can ping in background. iPhone Safari tab closed = no sound. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -2188,26 +2188,49 @@
       if (!m.warn) return "";
       return m.overload ? "Overload tomorrow." : "Conflict tomorrow.";
     }
-    function playChime() {
+    let chimeLoop = null;
+    function ensureAudio() {
       try {
         const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (!Ctx) return;
-        const ctx = playChime.ctx || (playChime.ctx = new Ctx());
-        if (ctx.state === "suspended") ctx.resume();
-        const now = ctx.currentTime;
-        [880, 1174, 988].forEach((freq, i) => {
-          const osc = ctx.createOscillator();
-          const g = ctx.createGain();
-          osc.type = "sine";
-          osc.frequency.value = freq;
-          const t0 = now + i * 0.18;
-          g.gain.setValueAtTime(0.0001, t0);
-          g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.02);
-          g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.85);
-          osc.connect(g); g.connect(ctx.destination);
-          osc.start(t0); osc.stop(t0 + 0.9);
-        });
-      } catch (e) {}
+        if (!Ctx) return null;
+        playChime.ctx = playChime.ctx || new Ctx();
+        if (playChime.ctx.state === "suspended") playChime.ctx.resume();
+        return playChime.ctx;
+      } catch (e) { return null; }
+    }
+    function playChimeOnce() {
+      const ctx = ensureAudio();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      [880, 1174, 988].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const t0 = now + i * 0.18;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.16, t0 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.85);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t0); osc.stop(t0 + 0.9);
+      });
+    }
+    function startChimeLoop() {
+      if (chimeLoop) return;
+      playChimeOnce();
+      chimeLoop = setInterval(playChimeOnce, 2200);
+    }
+    function stopChimeLoop() {
+      if (chimeLoop) { clearInterval(chimeLoop); chimeLoop = null; }
+    }
+    function jobLines(cfg) {
+      const jobs = tomorrowJobs(cfg);
+      if (!jobs.length) return ["No inspect tomorrow."];
+      return jobs.map(j => {
+        const p = pic(j.pic);
+        const type = TYPE_LABEL[j.type] || j.type;
+        return `${p ? p.name : j.pic} · ${j.factory || "-"} · ${j.customer || "-"} · ${type}`;
+      });
     }
     function showBellCard(cfg) {
       const t = $("bellToast");
@@ -2230,16 +2253,44 @@
             return `<div class="job"><div class="who">${p ? p.name : j.pic}</div><div class="meta">${bits || "Visit"}</div></div>`;
           }).join("")
         : `<div class="empty">No inspect tomorrow.</div>`;
-      t.innerHTML = `<div class="ht"><b>Tomorrow</b><button type="button" id="bellToastX" aria-label="Close">×</button></div>
+      t.innerHTML = `<div class="ht"><b>Tomorrow</b><button type="button" id="bellToastX" aria-label="Stop">ALERT OFF</button></div>
         <div class="when">${when}</div>
         ${rows}
         ${extra ? `<div class="warn">${extra}</div>` : ""}`;
       t.style.display = "block";
       const x = $("bellToastX");
-      if (x) x.onclick = () => { t.style.display = "none"; };
-      playChime();
-      clearTimeout(showBellCard._t);
-      showBellCard._t = setTimeout(() => { t.style.display = "none"; }, 20000);
+      if (x) x.onclick = () => silenceAlarm();
+      startChimeLoop();
+    }
+    function silenceAlarm() {
+      stopChimeLoop();
+      const t = $("bellToast");
+      if (t) t.style.display = "none";
+      const cfg = loadBell();
+      cfg.on = false;
+      saveBell(cfg);
+      paintArm();
+      armBackground(cfg);
+    }
+    function armBackground(cfg) {
+      if (!("Notification" in window)) return;
+      if (Notification.permission === "default") Notification.requestPermission().catch(() => {});
+      if (!navigator.serviceWorker || !navigator.serviceWorker.ready) return;
+      navigator.serviceWorker.ready.then(reg => {
+        const payload = {
+          on: !!cfg.on,
+          time: cfg.time,
+          times: cfg.times,
+          who: cfg.who,
+          conflict: cfg.conflict,
+          lines: jobLines(cfg),
+          day: tomorrowIso()
+        };
+        if (reg.active) reg.active.postMessage({ type: "qa-bell-arm", payload });
+        if ("periodicSync" in reg) {
+          reg.periodicSync.register("qa-bell", { minInterval: 15 * 60 * 1000 }).catch(() => {});
+        }
+      }).catch(() => {});
     }
     function bellSlots(cfg) {
       const parts = (cfg.time || "20:10").split(":");
@@ -2285,16 +2336,12 @@
       saveBell(cfg);
       paintArm();
       if (cfg.on) {
-        try {
-          const Ctx = window.AudioContext || window.webkitAudioContext;
-          if (Ctx) {
-            playChime.ctx = playChime.ctx || new Ctx();
-            if (playChime.ctx.state === "suspended") playChime.ctx.resume();
-          }
-        } catch (e) {}
+        ensureAudio();
+        armBackground(cfg);
         showBellCard(cfg);
       } else {
-        $("bellToast").style.display = "none";
+        silenceAlarm();
+        armBackground(cfg);
       }
     };
     fillBellForm();
@@ -2317,11 +2364,21 @@
     if (navigator.serviceWorker) {
       navigator.serviceWorker.register("./sw.js").then(reg => {
         if (reg.update) reg.update().catch(() => {});
+        const cfg = loadBell();
+        if (cfg.on) armBackground(cfg);
       }).catch(() => {});
       navigator.serviceWorker.addEventListener("controllerchange", () => {
         if (window.__qaReloaded) return;
         window.__qaReloaded = true;
         location.reload();
+      });
+      navigator.serviceWorker.addEventListener("message", ev => {
+        const msg = ev.data || {};
+        if (msg.type === "qa-bell-fire") {
+          const cfg = loadBell();
+          if (!cfg.on) return;
+          showBellCard(cfg);
+        }
       });
     }
     try { resultOverlays = JSON.parse(localStorage.getItem("qa-board-results") || "{}"); } catch (e) { resultOverlays = {}; }

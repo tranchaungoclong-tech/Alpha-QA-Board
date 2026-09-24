@@ -16,7 +16,7 @@ Do **not** edit this GitHub repo to add inspections. GitHub only hosts the page.
 
 | File | Role |
 | --- | --- |
-| `index.html` | Board (v49 — ALERT ON; 15 min repeats; top-right job card + fading chime) |
+| `index.html` | Board (v50 — looping chime until ALERT OFF; Chrome/PWA background ping; iPhone tab-closed still silent) |
 | `sheet-config.js` | Published CSV URL + Form URL |
 | `sw.js` / `manifest.json` | Offline cache of the last visit |
 | `SHEET.md` | Form → CSV → Pages |
