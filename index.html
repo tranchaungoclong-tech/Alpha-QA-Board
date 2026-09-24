@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v58</title>
+  <title>Alpha QA — Inspection Board v59</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -424,29 +424,33 @@
       bottom: max(16px, env(safe-area-inset-bottom));
       right: max(12px, env(safe-area-inset-right));
       top: auto; left: auto; transform: none; z-index: 90;
-      width: min(340px, calc(100vw - 24px)); max-height: min(52vh, calc(100vh - 80px)); overflow: auto;
-      background: #fff; color: var(--ink); padding: 0 0 10px; border-radius: 16px;
-      border: 1px solid #FECACA; box-shadow: 0 18px 40px rgba(15,23,42,.22);
-      display: none;
+      width: min(300px, calc(100vw - 24px));
+      background: transparent; color: var(--ink); padding: 0; border: 0;
+      box-shadow: none; display: none;
     }
     #bellToast .ht {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      padding: 10px 10px 6px 12px; position: sticky; top: 0; background: #fff;
+      display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+      padding: 0 2px 6px;
     }
-    #bellToast .ht b { font-size: 16px; letter-spacing: 0; text-transform: none; color: var(--ink); font-family: Newsreader, serif; }
+    #bellToast .ht b { display: none; }
     #bellToast .ht button.x {
-      border: 0; background: #F1F5F9; width: 32px; height: 32px; border-radius: 8px;
-      font-size: 22px; line-height: 1; cursor: pointer; color: var(--ink); flex: 0 0 auto;
+      border: 0; background: #0F172A; color: #fff; width: 28px; height: 28px; border-radius: 14px;
+      font-size: 18px; line-height: 1; cursor: pointer; flex: 0 0 auto;
+      box-shadow: 0 6px 16px rgba(15,23,42,.2);
     }
-    #bellToast .when { font-size: 12px; color: var(--muted); margin: 0 12px 8px; font-weight: 600; }
+    #bellToast .when { display: none; }
     #bellToast .job {
-      margin: 0 10px 8px; border: 0; border-radius: 12px;
-      padding: 8px 8px 8px 10px; border-left: 4px solid #FB7185;
+      margin: 0; border: 0; border-radius: 14px;
+      padding: 10px 12px 10px 12px; border-left: 5px solid #FB7185;
+      box-shadow: 0 12px 28px rgba(15,23,42,.18);
     }
-    #bellToast .job b { display: block; font-size: 15px; }
+    #bellToast .job b { display: block; font-size: 16px; }
     #bellToast .job .row { color: #475569; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; }
-    #bellToast .empty { font-size: 13px; color: var(--muted); margin: 0 12px 8px; }
-    #bellToast .warn { font-size: 12px; color: #BE123C; font-weight: 700; margin: 0 12px 6px; }
+    #bellToast .empty {
+      font-size: 13px; color: var(--muted); margin: 0; padding: 12px;
+      background: #fff; border-radius: 14px; box-shadow: 0 12px 28px rgba(15,23,42,.18);
+    }
+    #bellToast .warn { font-size: 12px; color: #BE123C; font-weight: 700; margin: 8px 4px 0; }
     .cal-tools .refresh:hover, .form-plus:hover, .bell:hover { filter: brightness(1.06); color: #fff; }
     .day-pop-head .form-plus {
       width: 40px; height: 40px; border-radius: 20px; font-size: 26px;
@@ -562,7 +566,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v58 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v59 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -610,7 +614,7 @@
               </button>
               <div class="bell-panel" id="bellPanel">
                 <h3>Alerts</h3>
-                <p class="bell-note">ALERT ON: one ding + Allow. Pink card only while this page is open. Phone locked / other tab: OS banner from the Worker (this phone's clock). Open the Home Screen icon, not a Safari tab.</p>
+                <p class="bell-note">ALERT ON: one ring + Allow. At the time: one pink job card (like the day cell) + phone ring until ×. No extra Chrome toasts on this PC.</p>
                 <div class="bell-row">
                   <label for="bellTime">Time</label>
                   <input id="bellTime" type="time" value="20:10" />
@@ -747,7 +751,7 @@
         </div>
       </div>
     </div>
-    <footer>v58. Push uses this phone's clock. Lock-screen banner if out of the app. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v59. One pink job card. Phone-ring tone until ×. No duplicate Chrome toasts. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -762,7 +766,7 @@
   </div>
 
   <iframe name="qaFormSink" id="qaFormSink" title="form sink" style="position:absolute;width:0;height:0;border:0;visibility:hidden"></iframe>
-  <script src="sheet-config.js?v=58"></script>
+  <script src="sheet-config.js?v=59"></script>
   <script>
     const PEOPLE = [
       { id: "philip", name: "Philip", color: "#FB7185" },
@@ -2193,15 +2197,16 @@
       const ctx = ensureAudio();
       if (!ctx) return;
       const t0 = ctx.currentTime;
-      ding(ctx, t0, 784, 0.42, 0.28, "sine");
-      ding(ctx, t0, 784, 0.42, 0.08, "triangle");
-      ding(ctx, t0 + 0.28, 523.25, 0.7, 0.24, "sine");
-      ding(ctx, t0 + 0.28, 523.25, 0.7, 0.07, "triangle");
+      [0, 0.22, 0.72, 0.94].forEach((off, i) => {
+        const peak = i % 2 === 0 ? 0.26 : 0.2;
+        ding(ctx, t0 + off, 1318.5, 0.16, peak, "sine");
+        ding(ctx, t0 + off, 2637, 0.12, 0.06, "triangle");
+      });
     }
     function startChimeLoop() {
       if (chimeLoop) return;
       playChimeOnce();
-      chimeLoop = setInterval(playChimeOnce, 2800);
+      chimeLoop = setInterval(playChimeOnce, 1600);
     }
     function stopChimeLoop() {
       if (chimeLoop) { clearInterval(chimeLoop); chimeLoop = null; }
@@ -2296,7 +2301,6 @@
           }).join("")
         : `<div class="empty">No inspect tomorrow.</div>`;
       t.innerHTML = `<div class="ht"><b>${head}</b><button type="button" class="x" id="bellToastX" aria-label="Close">×</button></div>
-        <div class="when">Tomorrow inspect</div>
         ${rows}
         ${extra ? `<div class="warn">${extra}</div>` : ""}`;
       t.style.display = "block";
@@ -2304,35 +2308,6 @@
       if (x) x.onclick = ev => { ev.stopPropagation(); silenceAlarm(); };
       ensureAudio();
       startChimeLoop();
-      pingOsToast(cfg);
-    }
-    function pingOsToast(cfg) {
-      if (!("Notification" in window)) return;
-      if (Notification.permission !== "granted") return;
-      const lines = jobLines(cfg);
-      try {
-        const n = new Notification("QA Board · tomorrow", {
-          body: lines.slice(0, 4).join("\n"),
-          icon: "./icon-192.png",
-          tag: "qa-bell",
-          renotify: true,
-          requireInteraction: true
-        });
-        n.onclick = () => { try { window.focus(); } catch (e) {} n.close(); };
-      } catch (e) {}
-      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
-        navigator.serviceWorker.ready.then(reg => {
-          if (reg.showNotification) {
-            return reg.showNotification("QA Board · tomorrow", {
-              body: lines.slice(0, 4).join("\n"),
-              icon: "./icon-192.png",
-              tag: "qa-bell",
-              renotify: true,
-              requireInteraction: true
-            });
-          }
-        }).catch(() => {});
-      }
     }
     function silenceAlarm() {
       stopChimeLoop();
