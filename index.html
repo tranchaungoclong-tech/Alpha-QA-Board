@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v62</title>
+  <title>Alpha QA — Inspection Board v63</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -566,7 +566,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v62 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v63 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -614,7 +614,7 @@
               </button>
               <div class="bell-panel" id="bellPanel">
                 <h3>Alerts</h3>
-                <p class="bell-note">ALERT ON only arms the clock (one ring to open the speaker). Pink card at the set minute — not on ALERT ON, even if that minute is now. Other Chrome tab: one floating card. iPhone lock: OS banner.</p>
+                <p class="bell-note">ALERT ON arms the clock (one beep to open the speaker) and keeps a small waiting window for other Chrome tabs. At the set time: one pink job card + beep-beep. Allow Picture-in-Picture if Chrome asks. iPhone lock: OS banner.</p>
                 <div class="bell-row">
                   <label for="bellTime">Time</label>
                   <input id="bellTime" type="time" value="20:10" />
@@ -751,7 +751,7 @@
         </div>
       </div>
     </div>
-    <footer>v62. ALERT ON arms only — no card even if the time is now. One pink card at the next set minute. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v63. One pink job card (not two Chrome toasts). Beep-beep. Other Chrome tab uses the waiting window from ALERT ON. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -2172,6 +2172,7 @@
       return m.overload ? "Overload tomorrow." : "Conflict tomorrow.";
     }
     let chimeLoop = null;
+    let keepAlive = null;
     function ensureAudio() {
       try {
         const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -2181,32 +2182,45 @@
         return playChime.ctx;
       } catch (e) { return null; }
     }
+    function keepSpeaker() {
+      const ctx = ensureAudio();
+      if (!ctx || keepAlive) return;
+      try {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.frequency.value = 20;
+        g.gain.value = 0.00002;
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start();
+        keepAlive = osc;
+      } catch (e) {}
+    }
+    function stopSpeaker() {
+      try { if (keepAlive) keepAlive.stop(); } catch (e) {}
+      keepAlive = null;
+    }
     function ding(ctx, t0, freq, dur, peak, type) {
       const osc = ctx.createOscillator();
       const g = ctx.createGain();
-      osc.type = type || "sine";
+      osc.type = type || "square";
       osc.frequency.setValueAtTime(freq, t0);
-      osc.frequency.exponentialRampToValueAtTime(Math.max(80, freq * 0.88), t0 + dur);
       g.gain.setValueAtTime(0.0001, t0);
-      g.gain.exponentialRampToValueAtTime(peak, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(peak, t0 + 0.008);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
       osc.connect(g); g.connect(ctx.destination);
-      osc.start(t0); osc.stop(t0 + dur + 0.04);
+      osc.start(t0); osc.stop(t0 + dur + 0.02);
     }
     function playChimeOnce() {
       const ctx = ensureAudio();
       if (!ctx) return;
       const t0 = ctx.currentTime;
-      [0, 0.22, 0.72, 0.94].forEach((off, i) => {
-        const peak = i % 2 === 0 ? 0.26 : 0.2;
-        ding(ctx, t0 + off, 1318.5, 0.16, peak, "sine");
-        ding(ctx, t0 + off, 2637, 0.12, 0.06, "triangle");
-      });
+      ding(ctx, t0, 980, 0.08, 0.32, "square");
+      ding(ctx, t0 + 0.13, 980, 0.08, 0.32, "square");
     }
     function startChimeLoop() {
       if (chimeLoop) return;
       playChimeOnce();
-      chimeLoop = setInterval(playChimeOnce, 1600);
+      chimeLoop = setInterval(playChimeOnce, 700);
     }
     function stopChimeLoop() {
       if (chimeLoop) { clearInterval(chimeLoop); chimeLoop = null; }
@@ -2276,15 +2290,9 @@
       a.click();
       setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
     }
-    function showBellCard(cfg) {
-      const t = $("bellToast");
-      const day = tomorrowIso();
+    function jobCardInner(cfg) {
       const jobs = tomorrowJobs(cfg);
       const extra = conflictLine(cfg);
-      const [y, m, d] = day.split("-").map(Number);
-      const dt = parse(day);
-      const DOW = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-      const head = `${DOW[mon0(dt)]} ${d} ${SHORT[m - 1]}`;
       const rows = jobs.length
         ? jobs.map(j => {
             const p = pic(j.pic);
@@ -2300,22 +2308,37 @@
             </div>`;
           }).join("")
         : `<div class="empty">No inspect tomorrow.</div>`;
+      return rows + (extra ? `<div class="warn">${extra}</div>` : "");
+    }
+    function showInPageCard(cfg) {
+      const t = $("bellToast");
+      const day = tomorrowIso();
+      const [y, m, d] = day.split("-").map(Number);
+      const dt = parse(day);
+      const DOW = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+      const head = `${DOW[mon0(dt)]} ${d} ${SHORT[m - 1]}`;
       t.innerHTML = `<div class="ht"><b>${head}</b><button type="button" class="x" id="bellToastX" aria-label="Close">×</button></div>
-        ${rows}
-        ${extra ? `<div class="warn">${extra}</div>` : ""}`;
+        ${jobCardInner(cfg)}`;
       t.style.display = "block";
       const x = $("bellToastX");
       if (x) x.onclick = ev => { ev.stopPropagation(); silenceAlarm(); };
+    }
+    function pipHasWindow() {
+      return !!(window.__bellPip && !window.__bellPip.closed);
+    }
+    function showBellCard(cfg) {
       ensureAudio();
+      keepSpeaker();
       startChimeLoop();
-      if (document.visibilityState !== "visible") {
-        openBellPip().then(ok => {
-          paintBellPip(cfg);
-          if (!ok) pingOsToast(cfg);
-        });
+      if (pipHasWindow()) {
+        paintBellPip(cfg, "job");
+        return;
       }
+      showInPageCard(cfg);
+      if (document.visibilityState !== "visible") pingOsToast(cfg);
     }
     function pingOsToast(cfg) {
+      if (pipHasWindow()) return;
       if (!("Notification" in window) || Notification.permission !== "granted") return;
       if (document.visibilityState === "visible") return;
       const lines = jobLines(cfg);
@@ -2324,13 +2347,13 @@
           body: lines.slice(0, 4).join("\n"),
           icon: "./icon-192.png",
           tag: "qa-bell",
-          renotify: true,
+          renotify: false,
           requireInteraction: true
         });
         n.onclick = () => { try { window.focus(); } catch (e) {} n.close(); };
       } catch (e) {}
     }
-    function bellCardHtml(cfg) {
+    function pipJobHtml(cfg) {
       const jobs = tomorrowJobs(cfg);
       const extra = conflictLine(cfg);
       const rows = jobs.length
@@ -2341,31 +2364,40 @@
             const type = TYPE_LABEL[j.type] || j.type;
             const tint = TINT[j.pic] || "#FFE4E6";
             const edge = p && p.color ? p.color : "#FB7185";
-            return `<div style="background:${tint};border-left:5px solid ${edge};border-radius:14px;padding:10px 12px;margin:0 0 8px;font:14px/1.35 'IBM Plex Sans',sans-serif">
+            return `<div style="background:${tint};border-left:5px solid ${edge};border-radius:14px;padding:10px 12px;margin:0 0 8px;font:14px/1.35 'IBM Plex Sans',sans-serif;box-shadow:0 12px 28px rgba(15,23,42,.18)">
               <b style="display:block;font-size:16px">${p ? p.name : j.pic} <span style="color:#64748B;font-weight:600">(${dur})</span></b>
               <div style="color:#475569;font-size:13px;margin-top:4px">🏭 ${j.factory || "-"} &nbsp;👤 ${j.customer || "-"}</div>
               <div style="color:#475569;font-size:13px;margin-top:2px">📌 ${type} | ${sm.label}</div>
             </div>`;
           }).join("")
-        : `<div style="padding:12px;color:#64748B">No inspect tomorrow.</div>`;
-      return `${rows}${extra ? `<div style="color:#BE123C;font-weight:700;font-size:12px">${extra}</div>` : ""}`;
+        : `<div style="padding:12px;color:#64748B;background:#fff;border-radius:14px">No inspect tomorrow.</div>`;
+      return `<div style="display:flex;justify-content:flex-end;padding:0 2px 6px"><button type="button" id="pipX" style="border:0;background:#0F172A;color:#fff;width:28px;height:28px;border-radius:14px;font-size:18px;line-height:1;cursor:pointer">×</button></div>
+        ${rows}${extra ? `<div style="color:#BE123C;font-weight:700;font-size:12px;margin:0 4px">Conflict tomorrow.</div>` : ""}`;
     }
-    function paintBellPip(cfg) {
+    function pipWaitHtml(cfg) {
+      const time = (cfg && cfg.time) || "—";
+      return `<div style="padding:16px 14px;font:600 13px/1.4 'IBM Plex Sans',sans-serif;color:#64748B">Alert on · ${time}<div style="font-size:11px;font-weight:500;margin-top:4px">Pink job card at the set minute.</div></div>`;
+    }
+    function paintBellPip(cfg, mode) {
       const pip = window.__bellPip;
       if (!pip || pip.closed) return;
       const box = pip.document.getElementById("pipCard");
-      if (box) box.innerHTML = bellCardHtml(cfg);
+      if (!box) return;
+      box.innerHTML = mode === "job" ? pipJobHtml(cfg) : pipWaitHtml(cfg);
+      const x = pip.document.getElementById("pipX");
+      if (x) x.onclick = () => { silenceAlarm(); };
     }
-    async function openBellPip() {
+    async function openBellPip(mode) {
       if (!window.documentPictureInPicture) return false;
-      if (window.__bellPip && !window.__bellPip.closed) return true;
       try {
-        const pip = await documentPictureInPicture.requestWindow({ width: 320, height: 220 });
-        window.__bellPip = pip;
-        pip.document.head.innerHTML = `<style>body{margin:0;background:#fff;font-family:'IBM Plex Sans',sans-serif}</style>`;
-        pip.document.body.innerHTML = `<div id="pipCard" style="padding:10px"></div>`;
-        pip.addEventListener("pagehide", () => { window.__bellPip = null; });
-        paintBellPip(loadBell());
+        if (!pipHasWindow()) {
+          const pip = await documentPictureInPicture.requestWindow({ width: 320, height: 220 });
+          window.__bellPip = pip;
+          pip.document.head.innerHTML = `<style>html,body{margin:0;background:transparent;font-family:'IBM Plex Sans',sans-serif}#pipCard{padding:8px}</style>`;
+          pip.document.body.innerHTML = `<div id="pipCard"></div>`;
+          pip.addEventListener("pagehide", () => { window.__bellPip = null; });
+        }
+        paintBellPip(loadBell(), mode || "wait");
         return true;
       } catch (e) { return false; }
     }
@@ -2373,8 +2405,7 @@
       stopChimeLoop();
       const t = $("bellToast");
       if (t) t.style.display = "none";
-      try { if (window.__bellPip && !window.__bellPip.closed) window.__bellPip.close(); } catch (e) {}
-      window.__bellPip = null;
+      if (pipHasWindow()) paintBellPip(loadBell(), "wait");
       if (navigator.serviceWorker && navigator.serviceWorker.ready) {
         navigator.serviceWorker.ready.then(reg => {
           if (reg.getNotifications) {
@@ -2385,6 +2416,9 @@
     }
     function turnAlertOff() {
       silenceAlarm();
+      stopSpeaker();
+      try { if (pipHasWindow()) window.__bellPip.close(); } catch (e) {}
+      window.__bellPip = null;
       const cfg = loadBell();
       cfg.on = false;
       saveBell(cfg);
@@ -2541,12 +2575,11 @@
       if (cfg.on) {
         const t = $("bellToast");
         if (t) t.style.display = "none";
-        try { if (window.__bellPip && !window.__bellPip.closed) window.__bellPip.close(); } catch (e) {}
-        window.__bellPip = null;
         stopChimeLoop();
         skipOpenSlots(cfg);
-        ensureAudio();
+        keepSpeaker();
         playChimeOnce();
+        openBellPip("wait");
         if ("Notification" in window && Notification.permission === "default") {
           Notification.requestPermission().catch(() => {});
         }
@@ -2562,7 +2595,16 @@
     fillBellForm();
     setInterval(tickBell, 2000);
     tickBell();
-    document.addEventListener("visibilitychange", () => { tickBell(); });
+    document.addEventListener("visibilitychange", () => {
+      tickBell();
+      const cfg = loadBell();
+      if (!cfg.on) return;
+      const t = $("bellToast");
+      const ringing = t && t.style.display === "block";
+      if (document.visibilityState !== "visible" && ringing) {
+        if (pipHasWindow()) paintBellPip(cfg, "job");
+      }
+    });
     $("dayPopClose").onclick = ev => { ev.stopPropagation(); closeDayPop(); };
     $("dayPopPlus").onclick = ev => ev.stopPropagation();
     $("dayPop").onclick = ev => { if (ev.target.id === "dayPop") closeDayPop(); };
