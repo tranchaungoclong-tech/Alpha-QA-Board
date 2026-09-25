@@ -8,7 +8,7 @@ crons = ["* * * * *"]
 
 [vars]
 VAPID_PUBLIC_KEY = "BKusLhf3iGG_k_rleeQSkUosLJrk1gtptK-MLVVKdEhPdRNF1xQVQqMzYlV6qpHxKy095ytdvtyXdeVAbxmU4vU"
-VAPID_SUBJECT = "mailto:qa-board@alpha-fashion.local"
+VAPID_SUBJECT = "mailto:tranchaungoclong@gmail.com"
 SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRN1VuOjowpH_lX8LoyFOaXTQ97RDGMcUa4B_R031udAEPssjovgRHynFZVFQPPmRitFKopUZmUlAl5/pub?gid=2026108596&single=true&output=csv"
 BOARD_URL = "https://tranchaungoclong-tech.github.io/Alpha-QA-Board/"
 

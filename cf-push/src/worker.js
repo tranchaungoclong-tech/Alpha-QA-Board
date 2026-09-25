@@ -13,9 +13,9 @@ function json(data, status = 200) {
   });
 }
 
-function vnNow() {
+function clockAt(timeZone) {
   const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Ho_Chi_Minh",
+    timeZone: timeZone || "Asia/Ho_Chi_Minh",
     year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit", hourCycle: "h23"
   }).formatToParts(new Date());
@@ -25,8 +25,26 @@ function vnNow() {
   return {
     date: `${get("year")}-${get("month")}-${get("day")}`,
     hour, minute,
-    mins: hour * 60 + minute
+    mins: hour * 60 + minute,
+    tz: timeZone || "Asia/Ho_Chi_Minh"
   };
+}
+
+function vnNow() {
+  return clockAt("Asia/Ho_Chi_Minh");
+}
+
+function deviceNow(rec) {
+  if (rec && Number.isFinite(Number(rec.tzOffset))) {
+    const shifted = new Date(Date.now() - Number(rec.tzOffset) * 60000);
+    const y = shifted.getUTCFullYear();
+    const m = String(shifted.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(shifted.getUTCDate()).padStart(2, "0");
+    const hour = shifted.getUTCHours();
+    const minute = shifted.getUTCMinutes();
+    return { date: `${y}-${m}-${d}`, hour, minute, mins: hour * 60 + minute, tz: rec.tz || "offset" };
+  }
+  return clockAt(rec && rec.tz ? rec.tz : "Asia/Ho_Chi_Minh");
 }
 
 function addDays(iso, n) {
@@ -167,7 +185,7 @@ async function listSubs(env) {
 
 async function fireFor(env, rec, key, jobs, force) {
   const arm = rec.arm || {};
-  const now = vnNow();
+  const now = deviceNow(rec);
   const tomorrow = addDays(now.date, 1);
   const who = arm.who && arm.who !== "all" ? arm.who : rec.pic;
   const mine = (jobs || []).filter(j => {
@@ -204,12 +222,13 @@ async function cronTick(env, forcePic) {
   const result = [];
   for (const { key, rec } of subs) {
     const arm = rec.arm || {};
+    const local = deviceNow(rec);
     if (!forcePic && !arm.on) continue;
-    if (forcePic && rec.pic !== forcePic && arm.who !== forcePic && arm.who !== "all") continue;
+    if (forcePic && forcePic !== "*" && rec.pic !== forcePic && arm.who !== forcePic && arm.who !== "all") continue;
     const slotList = slotsOf(arm);
-    if (!forcePic && !inSlot(arm, now.mins)) continue;
-    const slotIdx = forcePic ? "test" : String(slotList.findIndex(slot => now.mins >= slot && now.mins <= slot + 2));
-    const sentKey = `sent:${now.date}:${key}:${slotIdx}`;
+    if (!forcePic && !inSlot(arm, local.mins)) continue;
+    const slotIdx = forcePic ? "test" : String(slotList.findIndex(slot => local.mins >= slot && local.mins <= slot + 2));
+    const sentKey = `sent:${local.date}:${key}:${slotIdx}`;
     if (!forcePic) {
       const already = await env.SUBS.get(sentKey);
       if (already) continue;
@@ -228,7 +247,7 @@ export default {
     try {
       if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
         const n = env.SUBS ? (await env.SUBS.list({ prefix: "sub:", limit: 100 })).keys.length : 0;
-        return json({ ok: true, subs: n, vn: vnNow(), publicKey: env.VAPID_PUBLIC_KEY || "" });
+        return json({ ok: true, subs: n, vn: vnNow(), utc: new Date().toISOString(), publicKey: env.VAPID_PUBLIC_KEY || "" });
       }
       if (req.method === "GET" && url.pathname === "/vapidPublicKey") {
         return json({ publicKey: env.VAPID_PUBLIC_KEY || "" });
@@ -243,10 +262,20 @@ export default {
           pic,
           subscription,
           arm: body.arm || { on: true, time: "20:10", times: 1, who: pic },
+          tzOffset: Number.isFinite(Number(body.tzOffset)) ? Number(body.tzOffset) : null,
+          tz: String(body.tz || ""),
           at: new Date().toISOString()
         };
-        await env.SUBS.put("sub:" + id, JSON.stringify(rec));
-        return json({ ok: true, pic, id });
+        const key = "sub:" + id;
+        await env.SUBS.put(key, JSON.stringify(rec));
+        const skip = Array.isArray(body.skipSlots) ? body.skipSlots.map(Number).filter(n => n >= 0) : [];
+        if (skip.length) {
+          const local = deviceNow(rec);
+          for (const i of skip) {
+            await env.SUBS.put(`sent:${local.date}:${key}:${i}`, "1", { expirationTtl: 48 * 3600 });
+          }
+        }
+        return json({ ok: true, pic, id, skipped: skip });
       }
       if (req.method === "POST" && url.pathname === "/unsubscribe") {
         const body = await req.json();
@@ -259,7 +288,7 @@ export default {
       if (req.method === "POST" && url.pathname === "/test") {
         const body = await req.json().catch(() => ({}));
         const pic = String(body.pic || "").toLowerCase();
-        const out = await cronTick(env, pic || null);
+        const out = await cronTick(env, pic || "*");
         return json(out);
       }
       return json({ error: "not found" }, 404);

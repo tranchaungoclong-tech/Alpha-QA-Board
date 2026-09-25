@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v61</title>
+  <title>Alpha QA — Inspection Board v62</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -566,7 +566,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v61 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v62 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -614,7 +614,7 @@
               </button>
               <div class="bell-panel" id="bellPanel">
                 <h3>Alerts</h3>
-                <p class="bell-note">ALERT ON only arms the clock (one ring to open the speaker). The pink card appears at the set time — one card. Other Chrome tab: floating card then. iPhone lock: OS banner.</p>
+                <p class="bell-note">ALERT ON only arms the clock (one ring to open the speaker). Pink card at the set minute — not on ALERT ON, even if that minute is now. Other Chrome tab: one floating card. iPhone lock: OS banner.</p>
                 <div class="bell-row">
                   <label for="bellTime">Time</label>
                   <input id="bellTime" type="time" value="20:10" />
@@ -751,7 +751,7 @@
         </div>
       </div>
     </div>
-    <footer>v61. ALERT ON arms only. One pink card at the set time. Floating window only on other Chrome tabs. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v62. ALERT ON arms only — no card even if the time is now. One pink card at the next set minute. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -2309,8 +2309,10 @@
       ensureAudio();
       startChimeLoop();
       if (document.visibilityState !== "visible") {
-        openBellPip().then(() => paintBellPip(cfg));
-        pingOsToast(cfg);
+        openBellPip().then(ok => {
+          paintBellPip(cfg);
+          if (!ok) pingOsToast(cfg);
+        });
       }
     }
     function pingOsToast(cfg) {
@@ -2355,8 +2357,8 @@
       if (box) box.innerHTML = bellCardHtml(cfg);
     }
     async function openBellPip() {
-      if (!window.documentPictureInPicture) return;
-      if (window.__bellPip && !window.__bellPip.closed) return;
+      if (!window.documentPictureInPicture) return false;
+      if (window.__bellPip && !window.__bellPip.closed) return true;
       try {
         const pip = await documentPictureInPicture.requestWindow({ width: 320, height: 220 });
         window.__bellPip = pip;
@@ -2364,7 +2366,8 @@
         pip.document.body.innerHTML = `<div id="pipCard" style="padding:10px"></div>`;
         pip.addEventListener("pagehide", () => { window.__bellPip = null; });
         paintBellPip(loadBell());
-      } catch (e) {}
+        return true;
+      } catch (e) { return false; }
     }
     function silenceAlarm() {
       stopChimeLoop();
@@ -2434,8 +2437,12 @@
             times: cfg.times,
             who: cfg.who,
             conflict: cfg.conflict,
-            lines: jobLines(cfg)
-          }
+            lines: jobLines(cfg),
+            skipSlots: cfg.skipSlots || [],
+            skipDate: cfg.skipDate || ""
+          },
+          skipSlots: cfg.skipSlots || [],
+          skipDate: cfg.skipDate || ""
         });
       }).catch(() => {});
     }
@@ -2451,7 +2458,9 @@
           who: cfg.who,
           conflict: cfg.conflict,
           lines: jobLines(cfg),
-          day: tomorrowIso()
+          day: tomorrowIso(),
+          skipSlots: cfg.skipSlots || [],
+          skipDate: cfg.skipDate || ""
         };
         if (reg.active) reg.active.postMessage({ type: "qa-bell-arm", payload });
         if ("periodicSync" in reg) {
@@ -2468,20 +2477,46 @@
       for (let i = 0; i < n; i++) out.push(start + i * 15);
       return out;
     }
+    function loadFired() {
+      const now = localClock();
+      let fired = {};
+      try { fired = JSON.parse(localStorage.getItem(BELL_FIRED) || "{}"); } catch (e) { fired = {}; }
+      if (fired.date !== now.date) fired = { date: now.date, slots: [] };
+      return fired;
+    }
+    function saveFired(fired) {
+      localStorage.setItem(BELL_FIRED, JSON.stringify(fired));
+    }
+    function claimSlot(i) {
+      const fired = loadFired();
+      if (fired.slots.indexOf(i) >= 0) return false;
+      fired.slots.push(i);
+      saveFired(fired);
+      return true;
+    }
+    function skipOpenSlots(cfg) {
+      const now = localClock();
+      const fired = loadFired();
+      const skipped = [];
+      bellSlots(cfg).forEach((slot, i) => {
+        if (now.mins >= slot && now.mins <= slot + 2) {
+          if (fired.slots.indexOf(i) < 0) fired.slots.push(i);
+          skipped.push(i);
+        }
+      });
+      saveFired(fired);
+      cfg.skipSlots = skipped;
+      cfg.skipDate = now.date;
+      return skipped;
+    }
     function tickBell() {
       const cfg = loadBell();
       paintArm();
       if (!cfg.on) return;
       const now = localClock();
-      const slots = bellSlots(cfg);
-      let fired = {};
-      try { fired = JSON.parse(localStorage.getItem(BELL_FIRED) || "{}"); } catch (e) { fired = {}; }
-      if (fired.date !== now.date) fired = { date: now.date, slots: [] };
-      slots.forEach((slot, i) => {
+      bellSlots(cfg).forEach((slot, i) => {
         if (now.mins < slot || now.mins > slot + 2) return;
-        if (fired.slots.indexOf(i) >= 0) return;
-        fired.slots.push(i);
-        localStorage.setItem(BELL_FIRED, JSON.stringify(fired));
+        if (!claimSlot(i)) return;
         showBellCard(cfg);
       });
     }
@@ -2509,6 +2544,7 @@
         try { if (window.__bellPip && !window.__bellPip.closed) window.__bellPip.close(); } catch (e) {}
         window.__bellPip = null;
         stopChimeLoop();
+        skipOpenSlots(cfg);
         ensureAudio();
         playChimeOnce();
         if ("Notification" in window && Notification.permission === "default") {
@@ -2557,6 +2593,10 @@
         if (msg.type === "qa-bell-fire") {
           const cfg = loadBell();
           if (!cfg.on) return;
+          const now = localClock();
+          const i = bellSlots(cfg).findIndex(slot => now.mins >= slot && now.mins <= slot + 2);
+          if (i < 0) return;
+          if (!claimSlot(i)) return;
           showBellCard(cfg);
         }
       });

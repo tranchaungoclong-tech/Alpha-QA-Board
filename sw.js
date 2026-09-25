@@ -1,4 +1,4 @@
-const CACHE = "qa-board-v61";
+const CACHE = "qa-board-v62";
 const PRECACHE = ["./", "./index.html", "./manifest.json", "./icon-180.png", "./icon-192.png"];
 let bellArm = null;
 
@@ -27,30 +27,44 @@ function inSlot(arm) {
   if (!arm || !arm.on || !arm.time) return false;
   const now = new Date();
   const mins = now.getHours() * 60 + now.getMinutes();
+  const date = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
   const parts = String(arm.time).split(":");
   const start = Number(parts[0]) * 60 + Number(parts[1] || 0);
   const n = Math.max(1, Math.min(3, Number(arm.times) || 1));
+  const skip = (arm.skipDate === date && Array.isArray(arm.skipSlots)) ? arm.skipSlots : [];
   for (let i = 0; i < n; i++) {
     const slot = start + i * 15;
-    if (mins >= slot && mins <= slot + 2) return true;
+    if (mins >= slot && mins <= slot + 2) {
+      if (skip.indexOf(i) >= 0) return false;
+      return true;
+    }
   }
   return false;
+}
+
+function isIos() {
+  return /iP(hone|ad|od)/.test(self.navigator.userAgent || "");
+}
+
+function osToast(title, opts, clients) {
+  if (!isIos() && clients && clients.length) return Promise.resolve();
+  return self.registration.showNotification(title, opts);
 }
 
 function fireBell() {
   const lines = (bellArm && bellArm.lines) || ["Tomorrow inspect"];
   const body = lines.slice(0, 6).join("\n");
-  const show = self.registration.showNotification("QA Board · tomorrow", {
+  const opts = {
     body,
     icon: "./icon-192.png",
     badge: "./icon-192.png",
     tag: "qa-bell",
     renotify: true,
     requireInteraction: true
-  });
+  };
   return self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
     list.forEach(c => c.postMessage({ type: "qa-bell-fire" }));
-    return show;
+    return osToast("QA Board · tomorrow", opts, list);
   });
 }
 
@@ -67,17 +81,18 @@ self.addEventListener("push", event => {
   const title = data.title || "QA Board · tomorrow";
   const body = data.body || (Array.isArray(data.lines) ? data.lines.join("\n") : "Tomorrow inspect");
   event.waitUntil(
-    self.registration.showNotification(title, {
-      body,
-      icon: "./icon-192.png",
-      badge: "./icon-192.png",
-      tag: data.tag || "qa-bell",
-      renotify: true,
-      requireInteraction: true,
-      data
-    }).then(() => self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
       list.forEach(c => c.postMessage({ type: "qa-bell-fire", payload: data }));
-    }))
+      return osToast(title, {
+        body,
+        icon: "./icon-192.png",
+        badge: "./icon-192.png",
+        tag: data.tag || "qa-bell",
+        renotify: true,
+        requireInteraction: true,
+        data
+      }, list);
+    })
   );
 });
 
