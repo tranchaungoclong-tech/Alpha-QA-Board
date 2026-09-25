@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v65</title>
+  <title>Alpha QA — Inspection Board v66</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -566,7 +566,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v65 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v66 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -749,7 +749,7 @@
         </div>
       </div>
     </div>
-    <footer>v65. ALERT ON does not open a window. One pink job card at the set minute. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v66. ALERT ON does not open a window. Other Chrome tab: one OS banner. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -2333,7 +2333,6 @@
         return;
       }
       showInPageCard(cfg);
-      if (document.visibilityState !== "visible") pingOsToast(cfg);
     }
     function pingOsToast(cfg) {
       if (pipHasWindow()) return;
@@ -2519,10 +2518,10 @@
     function saveFired(fired) {
       localStorage.setItem(BELL_FIRED, JSON.stringify(fired));
     }
-    function claimSlot(i) {
+    function claimMins(mins) {
       const fired = loadFired();
-      if (fired.slots.indexOf(i) >= 0) return false;
-      fired.slots.push(i);
+      if (fired.slots.indexOf(mins) >= 0) return false;
+      fired.slots.push(mins);
       saveFired(fired);
       return true;
     }
@@ -2530,10 +2529,10 @@
       const now = localClock();
       const fired = loadFired();
       const skipped = [];
-      bellSlots(cfg).forEach((slot, i) => {
+      bellSlots(cfg).forEach(slot => {
         if (now.mins >= slot && now.mins <= slot + 2) {
-          if (fired.slots.indexOf(i) < 0) fired.slots.push(i);
-          skipped.push(i);
+          if (fired.slots.indexOf(slot) < 0) fired.slots.push(slot);
+          skipped.push(slot);
         }
       });
       saveFired(fired);
@@ -2546,9 +2545,9 @@
       paintArm();
       if (!cfg.on) return;
       const now = localClock();
-      bellSlots(cfg).forEach((slot, i) => {
+      bellSlots(cfg).forEach(slot => {
         if (now.mins < slot || now.mins > slot + 2) return;
-        if (!claimSlot(i)) return;
+        if (!claimMins(slot)) return;
         showBellCard(cfg);
       });
     }
@@ -2631,9 +2630,8 @@
           const cfg = loadBell();
           if (!cfg.on) return;
           const now = localClock();
-          const i = bellSlots(cfg).findIndex(slot => now.mins >= slot && now.mins <= slot + 2);
-          if (i < 0) return;
-          if (!claimSlot(i)) return;
+          const slot = bellSlots(cfg).find(s => now.mins >= s && now.mins <= s + 2);
+          if (!claimMins(slot != null ? slot : now.mins)) return;
           showBellCard(cfg);
         }
       });

@@ -271,8 +271,11 @@ export default {
         const skip = Array.isArray(body.skipSlots) ? body.skipSlots.map(Number).filter(n => n >= 0) : [];
         if (skip.length) {
           const local = deviceNow(rec);
-          for (const i of skip) {
-            await env.SUBS.put(`sent:${local.date}:${key}:${i}`, "1", { expirationTtl: 48 * 3600 });
+          const slotList = slotsOf(rec.arm);
+          for (const mins of skip) {
+            const idx = slotList.findIndex(slot => mins === slot || (mins >= slot && mins <= slot + 2));
+            const mark = idx >= 0 ? String(idx) : String(mins);
+            await env.SUBS.put(`sent:${local.date}:${key}:${mark}`, "1", { expirationTtl: 48 * 3600 });
           }
         }
         return json({ ok: true, pic, id, skipped: skip });
