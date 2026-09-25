@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v64</title>
+  <title>Alpha QA — Inspection Board v65</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -566,7 +566,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v64 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v65 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -614,7 +614,6 @@
               </button>
               <div class="bell-panel" id="bellPanel">
                 <h3>Alerts</h3>
-                <p class="bell-note">ALERT ON only arms the clock (one beep to open the speaker). No window. At the set time: one pink job card + beep-beep on this tab. Other Chrome tab: one OS banner. iPhone lock: OS banner.</p>
                 <div class="bell-row">
                   <label for="bellTime">Time</label>
                   <input id="bellTime" type="time" value="20:10" />
@@ -643,7 +642,6 @@
                   <input id="bellConflict" type="checkbox" />
                 </div>
                 <button type="button" class="bell-arm" id="bellArm">ALERT ON</button>
-                <button type="button" class="bell-ics" id="bellIcs">Add to Calendar</button>
               </div>
             </div>
           </div>
@@ -751,7 +749,7 @@
         </div>
       </div>
     </div>
-    <footer>v64. ALERT ON does not open a window. One pink job card at the set minute. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v65. ALERT ON does not open a window. One pink job card at the set minute. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -2588,10 +2586,6 @@
       } else {
         turnAlertOff();
       }
-    };
-    $("bellIcs").onclick = ev => {
-      ev.stopPropagation();
-      downloadBellIcs(readBellForm());
     };
     fillBellForm();
     setInterval(tickBell, 2000);
