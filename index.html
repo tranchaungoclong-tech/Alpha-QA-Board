@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v75</title>
+  <title>Alpha QA — Inspection Board v76</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -324,9 +324,9 @@
     .side-donuts .card h2 { font-size: 14px; margin-bottom: 8px; padding-bottom: 6px; }
     .side-donuts svg.donut { width: min(100%, 188px); }
     .side-donuts .leg { font-size: 12px; gap: 6px 8px; font-weight: 600; }
-    .cat-row { display: grid; grid-template-columns: 92px 1fr 44px; gap: 8px; align-items: center; margin-bottom: 10px; cursor: pointer; }
-    .cat-row .lab { font-size: 12px; font-weight: 700; color: var(--ink); text-align: right; line-height: 1.2; }
-    .fac-row { grid-template-columns: minmax(0, 108px) 1fr 44px; }
+    .cat-row { display: grid; grid-template-columns: 118px 1fr 44px; gap: 8px; align-items: center; margin-bottom: 10px; cursor: pointer; }
+    .cat-row .lab { font-size: 14px; font-weight: 700; color: var(--ink); text-align: right; line-height: 1.2; }
+    .fac-row { grid-template-columns: minmax(0, 128px) 1fr 44px; }
     .fac-row .lab { display: flex; align-items: center; justify-content: flex-end; gap: 6px; text-align: left; }
     .fac-row .lab .dot { width: 10px; height: 10px; border-radius: 2px; flex: 0 0 auto; }
     .cat-track { height: 22px; background: #F1F5F9; border-radius: 6px; overflow: hidden; display: flex; }
@@ -555,7 +555,8 @@
       .year-kpis { grid-template-columns: 1fr 1fr; }
       .year-block { overflow-x: auto; }
       table.ys { min-width: 560px; }
-      .cat-row { grid-template-columns: 72px 1fr 40px; }
+      .cat-row { grid-template-columns: 96px 1fr 40px; }
+      .fac-row { grid-template-columns: minmax(0, 110px) 1fr 40px; }
       .card { padding: 12px; border-radius: 12px; }
       .card h2 { font-size: 13px; margin-bottom: 8px; padding-bottom: 6px; }
       .day { cursor: pointer; }
@@ -760,7 +761,7 @@
         </div>
       </div>
     </div>
-    <footer>v75. Colour square before each factory name. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v76. Category / Factory names a bit larger. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
