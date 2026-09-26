@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v78</title>
+  <title>Alpha QA — Inspection Board v79</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -432,33 +432,35 @@
       bottom: max(16px, env(safe-area-inset-bottom));
       right: max(12px, env(safe-area-inset-right));
       top: auto; left: auto; transform: none; z-index: 90;
-      width: min(300px, calc(100vw - 24px));
+      width: min(600px, calc(100vw - 24px));
       background: transparent; color: var(--ink); padding: 0; border: 0;
       box-shadow: none; display: none;
     }
     #bellToast .ht {
       display: flex; align-items: center; justify-content: flex-end; gap: 8px;
-      padding: 0 2px 6px;
+      padding: 0 2px 8px;
     }
     #bellToast .ht b { display: none; }
     #bellToast .ht button.x {
-      border: 0; background: #0F172A; color: #fff; width: 28px; height: 28px; border-radius: 14px;
-      font-size: 18px; line-height: 1; cursor: pointer; flex: 0 0 auto;
+      border: 0; background: #0F172A; color: #fff; width: 44px; height: 44px; border-radius: 22px;
+      font-size: 28px; line-height: 1; cursor: pointer; flex: 0 0 auto;
       box-shadow: 0 6px 16px rgba(15,23,42,.2);
     }
     #bellToast .when { display: none; }
     #bellToast .job {
-      margin: 0; border: 0; border-radius: 14px;
-      padding: 10px 12px 10px 12px; border-left: 5px solid #FB7185;
+      margin: 0; border: 0; border-radius: 18px;
+      padding: 20px 24px; border-left: 8px solid #FB7185;
       box-shadow: 0 12px 28px rgba(15,23,42,.18);
     }
-    #bellToast .job b { display: block; font-size: 16px; }
-    #bellToast .job .row { color: #475569; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; }
+    #bellToast .job b { display: block; font-size: 28px; }
+    #bellToast .job .row { color: #475569; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 20px; }
+    #bellToast .job .ico { font-size: 22px; }
+    #bellToast .job .stamp { font-size: 18px; padding: 4px 10px; }
     #bellToast .empty {
-      font-size: 13px; color: var(--muted); margin: 0; padding: 12px;
-      background: #fff; border-radius: 14px; box-shadow: 0 12px 28px rgba(15,23,42,.18);
+      font-size: 20px; color: var(--muted); margin: 0; padding: 24px;
+      background: #fff; border-radius: 18px; box-shadow: 0 12px 28px rgba(15,23,42,.18);
     }
-    #bellToast .warn { font-size: 12px; color: #BE123C; font-weight: 700; margin: 8px 4px 0; }
+    #bellToast .warn { font-size: 18px; color: #BE123C; font-weight: 700; margin: 12px 4px 0; }
     .cal-tools .refresh:hover, .form-plus:hover, .bell:hover { filter: brightness(1.06); color: #fff; }
     .day-pop-head .form-plus {
       width: 40px; height: 40px; border-radius: 20px; font-size: 26px;
@@ -760,7 +762,7 @@
         </div>
       </div>
     </div>
-    <footer>v78. Green ↻ reloads the page like Ctrl+Shift+R. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v79. Map closer to real shapes. Alert card twice as big. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -795,13 +797,13 @@
     const SOURCING_COLOR = ["#FBBF24","#FB7185","#2DD4BF","#818CF8"];
     const AUDIT_COLOR = ["#A78BFA","#22D3EE","#4ADE80","#F472B6"];
     const COUNTRY = {
-      IN: { name: "India", x: 78, y: 168, color: "#F59E0B" },
-      CN: { name: "China", x: 300, y: 68, color: "#F43F5E" },
-      VN: { name: "Vietnam", x: 338, y: 188, color: "#2563EB" },
-      TH: { name: "Thailand", x: 198, y: 168, color: "#16A34A" },
-      KH: { name: "Cambodia", x: 258, y: 198, color: "#EA580C" },
-      MY: { name: "Malaysia", x: 218, y: 268, color: "#7C3AED" },
-      ID: { name: "Indonesia", x: 300, y: 318, color: "#0F766E" }
+      IN: { name: "India", x: 86, y: 168, color: "#F59E0B" },
+      CN: { name: "China", x: 292, y: 78, color: "#F43F5E" },
+      VN: { name: "Vietnam", x: 268, y: 198, color: "#2563EB" },
+      TH: { name: "Thailand", x: 218, y: 178, color: "#16A34A" },
+      KH: { name: "Cambodia", x: 246, y: 198, color: "#EA580C" },
+      MY: { name: "Malaysia", x: 222, y: 248, color: "#7C3AED" },
+      ID: { name: "Indonesia", x: 278, y: 308, color: "#0F766E" }
     };
     const MONTH_THEME = [
       { month: "#0EA5E9", ink: "#0369A1", tint: "#E0F2FE" },
@@ -1902,32 +1904,30 @@
       jobs.forEach(j => { bag[j.country] = (bag[j.country] || 0) + j.days; });
       const max = Math.max(1, ...Object.values(bag), 1);
       const land = `
-        <rect x="0" y="0" width="420" height="360" fill="#F1F5F9"/>
-        <path d="M42 70 C88 42 132 58 148 118 C156 168 138 228 108 248 C72 252 38 198 34 138 C32 100 34 82 42 70Z" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.6"/>
-        <path d="M210 18 C268 8 348 16 388 48 C404 78 392 118 352 128 C318 118 278 92 248 62 C228 42 214 28 210 18Z" fill="#FEE2E2" stroke="#F43F5E" stroke-width="1.6"/>
-        <path d="M168 108 C208 98 232 122 228 158 C222 198 208 228 198 238 C178 232 162 188 160 148 C160 122 164 112 168 108Z" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.6"/>
-        <path d="M232 168 C258 162 274 176 270 196 C262 214 242 216 228 200 C222 186 224 172 232 168Z" fill="#FFEDD5" stroke="#EA580C" stroke-width="1.6"/>
-        <path d="M292 128 C328 138 352 168 348 208 C338 248 328 268 318 272 C300 258 286 218 284 178 C284 148 286 132 292 128Z" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.6"/>
-        <path d="M188 248 C222 242 240 258 236 282 C226 302 200 304 184 286 C176 270 178 252 188 248Z" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.6"/>
-        <path d="M248 292 C318 282 372 298 378 318 C360 338 300 344 248 338 C232 332 232 300 248 292Z" fill="#CCFBF1" stroke="#0F766E" stroke-width="1.6"/>
-        <text x="78" y="158" text-anchor="middle" font-size="13" font-weight="800" fill="#B45309">IN</text>
-        <text x="300" y="62" text-anchor="middle" font-size="13" font-weight="800" fill="#9F1239">CN</text>
-        <text x="198" y="148" text-anchor="middle" font-size="12" font-weight="800" fill="#166534">TH</text>
-        <text x="338" y="168" text-anchor="middle" font-size="12" font-weight="800" fill="#1E40AF">VN</text>
-        <text x="250" y="186" text-anchor="middle" font-size="11" font-weight="800" fill="#9A3412">KH</text>
-        <text x="210" y="258" text-anchor="middle" font-size="11" font-weight="800" fill="#5B21B6">MY</text>
-        <text x="300" y="328" text-anchor="middle" font-size="12" font-weight="800" fill="#115E59">ID</text>`;
+        <rect x="0" y="0" width="420" height="360" fill="#E8F4FC"/>
+        <path d="M48 92 C62 58 92 48 118 62 C138 52 158 68 164 92 C172 128 178 162 168 198 C158 228 138 248 118 242 C98 248 72 228 58 198 C42 162 38 122 48 92Z" fill="#FEF3C7" stroke="#D97706" stroke-width="1.4"/>
+        <path d="M198 28 C248 18 308 22 348 42 C378 58 398 88 392 118 C384 148 358 158 328 148 C308 168 278 158 258 138 C238 118 218 88 208 58 C202 42 198 32 198 28Z" fill="#FECACA" stroke="#E11D48" stroke-width="1.4"/>
+        <path d="M198 128 C218 118 238 128 242 152 C246 178 238 208 228 228 C214 238 198 218 196 188 C194 158 190 138 198 128Z" fill="#BBF7D0" stroke="#16A34A" stroke-width="1.4"/>
+        <path d="M228 178 C246 172 258 182 256 196 C250 210 236 212 226 200 C222 190 222 182 228 178Z" fill="#FED7AA" stroke="#EA580C" stroke-width="1.4"/>
+        <path d="M248 148 C262 142 274 158 270 188 C266 218 258 242 252 248 C240 238 236 208 238 178 C240 158 242 150 248 148Z" fill="#93C5FD" stroke="#2563EB" stroke-width="1.4"/>
+        <path d="M198 228 C222 222 238 238 234 258 C226 274 206 274 194 258 C188 244 190 232 198 228Z" fill="#DDD6FE" stroke="#7C3AED" stroke-width="1.4"/>
+        <path d="M188 288 C248 278 318 282 368 292 C378 302 358 318 308 322 C248 326 198 318 178 308 C172 300 176 292 188 288Z" fill="#99F6E4" stroke="#0F766E" stroke-width="1.4"/>
+        <text x="86" y="158" text-anchor="middle" font-size="13" font-weight="800" fill="#B45309">IN</text>
+        <text x="292" y="72" text-anchor="middle" font-size="13" font-weight="800" fill="#9F1239">CN</text>
+        <text x="218" y="168" text-anchor="middle" font-size="12" font-weight="800" fill="#166534">TH</text>
+        <text x="262" y="172" text-anchor="middle" font-size="12" font-weight="800" fill="#1E40AF">VN</text>
+        <text x="242" y="188" text-anchor="middle" font-size="10" font-weight="800" fill="#9A3412">KH</text>
+        <text x="216" y="248" text-anchor="middle" font-size="11" font-weight="800" fill="#5B21B6">MY</text>
+        <text x="278" y="312" text-anchor="middle" font-size="12" font-weight="800" fill="#115E59">ID</text>`;
       const bubbles = Object.keys(COUNTRY).map(code => {
         const c = COUNTRY[code];
         const days = bag[code] || 0;
-        const r = days ? 11 + (days / max) * 16 : 6;
+        const r = days ? 10 + (days / max) * 14 : 5;
         const on = f.country === code;
         const fill = days ? c.color : "#94A3B8";
-        const labelY = c.y + r + 13;
         return `<g data-cty="${code}" style="cursor:pointer">
-          <circle cx="${c.x}" cy="${c.y}" r="${r}" fill="${fill}" fill-opacity="${days ? (on ? .95 : .88) : .35}" stroke="${on ? "#0F172A" : "#fff"}" stroke-width="${on ? 3 : 2}"/>
+          <circle cx="${c.x}" cy="${c.y}" r="${r}" fill="${fill}" fill-opacity="${days ? (on ? .95 : .88) : .28}" stroke="${on ? "#0F172A" : "#fff"}" stroke-width="${on ? 3 : 2}"/>
           ${days ? `<text x="${c.x}" y="${c.y + 4}" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">${fmt(days)}d</text>` : ""}
-          ${days ? `<text x="${c.x}" y="${labelY}" text-anchor="middle" font-size="10" font-weight="800" fill="#334155">${code}</text>` : ""}
         </g>`;
       }).join("");
       $("seaMap").innerHTML = land + bubbles;
