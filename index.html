@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v86</title>
+  <title>Alpha QA — Inspection Board v87</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -389,10 +389,10 @@
       box-shadow: var(--shadow); flex: 0 0 auto; cursor: pointer; border: 0;
     }
     .lang-btn {
-      background: #0F172A; font-size: 13px; letter-spacing: .04em; gap: 0;
+      background: #7C3AED; font-size: 13px; letter-spacing: .04em; gap: 0;
       flex-direction: column; line-height: 1.05; padding: 4px 0;
     }
-    .lang-btn small { font-size: 9px; font-weight: 700; color: #94A3B8; }
+    .lang-btn small { font-size: 9px; font-weight: 700; color: #EDE9FE; }
     .lang-btn b { font-size: 13px; font-weight: 800; }
     html[lang="zh-CN"] .lang-btn b { letter-spacing: 0; }
     .cal-tools .refresh {
@@ -626,10 +626,6 @@
           <div class="cal-tools">
             <button type="button" class="refresh" id="refreshBtn" title="Reload page (Ctrl+Shift+R)" aria-label="Reload page">↻</button>
             <a class="form-plus" id="formPlus" href="#" target="_blank" rel="noopener noreferrer" title="Add inspection (Google Form)" aria-label="Add inspection">+</a>
-            <button type="button" class="lang-btn" id="langBtn" title="English / 中文" aria-label="Switch language">
-              <small id="langOther">中文</small>
-              <b id="langNow">EN</b>
-            </button>
             <div class="bell-dd" id="bellDd">
               <button type="button" class="bell" id="bellBtn" title="Alert settings" aria-label="Alert settings">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -669,6 +665,10 @@
                 <button type="button" class="bell-arm" id="bellArm">ALERT ON</button>
               </div>
             </div>
+            <button type="button" class="lang-btn" id="langBtn" title="English / 中文" aria-label="Switch language">
+              <small id="langOther">中文</small>
+              <b id="langNow">EN</b>
+            </button>
           </div>
           <div class="weekdays">
             <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
@@ -779,7 +779,7 @@
         </div>
       </div>
     </div>
-    <footer>v86. China bigger than India. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v87. Language button right of the bell, purple. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
