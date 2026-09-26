@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v91</title>
+  <title>Alpha QA — Inspection Board v92</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -778,7 +778,7 @@
         </div>
       </div>
     </div>
-    <footer>v91. Client ring matches sample: no numbers on slices, days in the legend. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v92. Client is a thin ring (nhẫn), not a pie. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -1791,10 +1791,10 @@
       const { entries, total } = data;
       const cx = 140, cy = 140;
       const R = compact ? 122 : 118;
-      const r = fiLegend ? 62 : (compact ? 34 : 32);
+      const r = fiLegend ? 88 : (compact ? 34 : 32);
       const pctSize = compact ? 20 : 22;
       const daySize = compact ? 13 : 14;
-      const centerSize = fiLegend ? 36 : (compact ? 18 : 20);
+      const centerSize = fiLegend ? 32 : (compact ? 18 : 20);
       const unitSize = fiLegend ? 13 : (compact ? 10 : 11);
       let acc = 0;
       let paths = `<circle cx="${cx}" cy="${cy}" r="${(R+r)/2}" fill="none" stroke="#E2E8F0" stroke-width="${R-r}"/>`;
