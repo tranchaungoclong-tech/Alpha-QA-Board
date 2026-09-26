@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v87</title>
+  <title>Alpha QA — Inspection Board v88</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -723,6 +723,7 @@
           <h2>Category · Inline / Final</h2>
           <div class="cat-key"><span><i style="background:#38BDF8"></i>Inline</span><span><i style="background:#FB7185"></i>Final</span></div>
           <div id="catBars"></div>
+          <div class="fac-tot" id="catTot"></div>
         </section>
         <section class="card factory-up">
           <h2>Factory</h2>
@@ -746,13 +747,10 @@
         </section>
         <section class="card">
           <h2>Client</h2>
-          <div class="cat-key has-other">
-            <span><i style="background:#38BDF8"></i>Inline</span>
-            <span><i style="background:#FB7185"></i>Final</span>
-            <span><i style="background:#94A3B8"></i>Other</span>
+          <div class="donut-wrap">
+            <svg class="donut" id="donut" viewBox="0 0 280 280"></svg>
+            <div class="leg" id="legend"></div>
           </div>
-          <div id="clientBars"></div>
-          <div class="fac-tot" id="clientTot"></div>
         </section>
         <div class="visit-family">
           <section class="card">
@@ -779,7 +777,7 @@
         </div>
       </div>
     </div>
-    <footer>v87. Language button right of the bell, purple. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v88. Category total days. Client is top-5 ring with days on slices. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -1811,9 +1809,14 @@
           const [lx, ly] = polar(cx, cy, (R + r) / 2, mid);
           const pct = Math.round(frac * 100);
           paths += `<path d="${arc(cx,cy,R,a0,a1)} L ${polar(cx,cy,r,a1).join(" ")} ${arc(cx,cy,r,a1,a0).replace("M","L")} Z" fill="${col}" data-k="${name}" style="cursor:pointer"/>`;
-          if (!fiLegend && pct >= 7) {
-            paths += `<text x="${lx}" y="${ly-3}" text-anchor="middle" font-size="${pctSize}" font-weight="800" fill="#fff">${pct}%</text>
-              <text x="${lx}" y="${ly+14}" text-anchor="middle" font-size="${daySize}" font-weight="700" fill="rgba(255,255,255,.95)">${fmt(v.days)}${unit === "jobs" ? "" : "d"}</text>`;
+          if (pct >= 6) {
+            const dayLab = fmt(v.days) + (unit === "jobs" ? "" : "d");
+            if (fiLegend || unit !== "jobs") {
+              paths += `<text x="${lx}" y="${ly+4}" text-anchor="middle" font-size="${daySize + 2}" font-weight="800" fill="#fff">${dayLab}</text>`;
+            } else {
+              paths += `<text x="${lx}" y="${ly-3}" text-anchor="middle" font-size="${pctSize}" font-weight="800" fill="#fff">${pct}%</text>
+                <text x="${lx}" y="${ly+14}" text-anchor="middle" font-size="${daySize}" font-weight="700" fill="rgba(255,255,255,.95)">${dayLab}</text>`;
+            }
           }
         });
       }
@@ -1826,11 +1829,11 @@
       });
       const suffix = unit === "jobs" ? "" : "d";
       $(legendId).innerHTML = entries.map(([name, v]) => {
+        const col = colorOf(name, entries.findIndex(([n]) => n === name));
         if (fiLegend) {
-          return `<span data-k="${name}"><i class="dot" style="background:${colorOf(name, entries.findIndex(([n]) => n === name))}"></i>${name}  ${fmt(v.days)}d · F ${fmt(v.final)} / I ${fmt(v.inline)}</span>`;
+          return `<span data-k="${name}"><i class="dot" style="background:${col}"></i>${name} ${fmt(v.days)}d</span>`;
         }
-        const pct = total ? Math.round(v.days / total * 100) : 0;
-        return `<span data-k="${name}"><i class="dot" style="background:${colorOf(name)}"></i>${name} · ${fmt(v.days)}${suffix} · ${pct}%</span>`;
+        return `<span data-k="${name}"><i class="dot" style="background:${col}"></i>${name} ${fmt(v.days)}${suffix}</span>`;
       }).join("") || `<span style="color:var(--muted)">No jobs in filter</span>`;
       $(legendId).querySelectorAll("[data-k]").forEach(el => {
         el.onclick = () => onPick(el.dataset.k);
@@ -1879,8 +1882,27 @@
       return { entries, total };
     }
 
+    function topOther(data, n, otherLabel) {
+      const entries = data.entries.slice();
+      if (entries.length <= n) return data;
+      const top = entries.slice(0, n);
+      const rest = entries.slice(n);
+      const other = rest.reduce((acc, [, v]) => {
+        acc.days += v.days;
+        acc.inline += v.inline || 0;
+        acc.final += v.final || 0;
+        return acc;
+      }, { days: 0, inline: 0, final: 0 });
+      return { entries: top.concat([[otherLabel, other]]), total: data.total, inline: data.inline, fin: data.fin };
+    }
+
     function renderDonut() {
       const jobs = filteredScope().filter(j => j.type !== "leave");
+      paintDonut("donut", "legend",
+        topOther(groupJobs(jobs, "customer"), 5, t("other")),
+        (name, i) => name === t("other") ? "#94A3B8" : (CLIENT_COLOR[name] || PIE_COLOR[i % PIE_COLOR.length]),
+        name => { if (name !== t("other")) setFilter("customer", name); },
+        undefined, false, true);
       const typed = groupJobs(jobs, "type");
       typed.entries = typed.entries.map(([k, v]) => [tType(k), v]);
       paintDonut("typeDonut", "typeLegend",
@@ -1978,39 +2000,6 @@
       });
     }
 
-    function renderClientBars() {
-      const jobs = filteredScope().filter(j => j.type !== "leave");
-      const { entries, total } = groupJobs(jobs, "customer");
-      const rows = entries.map(([name, v], i) => {
-        const other = Math.max(0, Math.round((v.days - v.inline - v.final) * 10) / 10);
-        const color = CLIENT_COLOR[name] || PIE_COLOR[i % PIE_COLOR.length];
-        return { name, inline: v.inline, final: v.final, other, tot: v.days, color };
-      });
-      const max = Math.max(1, ...rows.map(r => r.tot));
-      const seg = (cls, days) => {
-        if (!days) return "";
-        const w = days / max * 100;
-        const lab = fmt(days) + "d";
-        return `<div class="cat-seg ${cls}" style="width:${w}%">${lab}</div>`;
-      };
-      const host = $("clientBars");
-      const totEl = $("clientTot");
-      if (!host) return;
-      host.innerHTML = rows.length
-        ? rows.map(r => `<div class="cat-row fac-row" data-customer="${r.name}">
-            <div class="lab"><i class="dot" style="background:${r.color}"></i>${r.name}</div>
-            <div class="cat-track">
-              ${seg("inline", r.inline)}${seg("final", r.final)}${seg("other", r.other)}
-            </div>
-            <div class="cat-tot">${fmt(r.tot)}d</div>
-          </div>`).join("")
-        : `<div style="color:var(--muted);font-size:12px">${t("noCli")}</div>`;
-      if (totEl) totEl.textContent = rows.length ? t("total", { n: fmt(total) }) : "";
-      host.querySelectorAll("[data-customer]").forEach(el => {
-        el.onclick = () => setFilter("customer", el.dataset.customer);
-      });
-    }
-
     function renderCatBars() {
       const jobs = filteredScope().filter(j => j.type === "inline" || j.type === "final");
       const bag = {};
@@ -2039,6 +2028,9 @@
             </div>`;
           }).join("")
         : `<div style="color:var(--muted);font-size:12px">${t("noCat")}</div>`;
+      const catTot = $("catTot");
+      const catSum = rows.reduce((s, r) => s + r.tot, 0);
+      if (catTot) catTot.textContent = rows.length ? t("total", { n: fmt(catSum) }) : "";
       $("catBars").querySelectorAll("[data-cat]").forEach(el => {
         el.onclick = () => setFilter("category", el.dataset.cat);
       });
@@ -2231,7 +2223,6 @@
       renderPfRings();
       renderCatBars();
       renderFactoryBars();
-      renderClientBars();
       renderAlerts();
       renderMap();
       applyChrome();
