@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v80</title>
+  <title>Alpha QA — Inspection Board v81</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -762,7 +762,7 @@
         </div>
       </div>
     </div>
-    <footer>v80. China is a land block, not a blob. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v81. Alert card preview. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -2738,7 +2738,11 @@
     }
     try { resultOverlays = JSON.parse(localStorage.getItem("qa-board-results") || "{}"); } catch (e) { resultOverlays = {}; }
     bindFormPlus();
-    loadJobs().then(() => { render(); consumeAlertHash(); });
+    loadJobs().then(() => {
+      render();
+      consumeAlertHash();
+      if (/[?&]alert=1(?:&|$)/.test(location.search)) showInPageCard(loadBell());
+    });
   </script>
 </body>
 </html>
