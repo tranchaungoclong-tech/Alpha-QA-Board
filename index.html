@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v82</title>
+  <title>Alpha QA — Inspection Board v83</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -732,10 +732,13 @@
         </section>
         <section class="card">
           <h2>Client</h2>
-          <div class="donut-wrap">
-            <svg class="donut" id="donut" viewBox="0 0 280 280"></svg>
-            <div class="leg" id="legend"></div>
+          <div class="cat-key">
+            <span><i style="background:#38BDF8"></i>Inline</span>
+            <span><i style="background:#FB7185"></i>Final</span>
+            <span><i style="background:#94A3B8"></i>Other</span>
           </div>
+          <div id="clientBars"></div>
+          <div class="fac-tot" id="clientTot"></div>
         </section>
         <div class="visit-family">
           <section class="card">
@@ -762,7 +765,7 @@
         </div>
       </div>
     </div>
-    <footer>v82. VN and Cambodia split; day dots smaller. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v83. Client is rank bars with days in the colour. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -1768,11 +1771,6 @@
 
     function renderDonut() {
       const jobs = filteredScope().filter(j => j.type !== "leave");
-      paintDonut("donut", "legend",
-        groupJobs(jobs, "customer"),
-        (name, i) => CLIENT_COLOR[name] || PIE_COLOR[i % PIE_COLOR.length],
-        name => setFilter("customer", name),
-        undefined, false, true);
       const typed = groupJobs(jobs, "type");
       typed.entries = typed.entries.map(([k, v]) => [k[0].toUpperCase() + k.slice(1), v]);
       paintDonut("typeDonut", "typeLegend",
@@ -1844,7 +1842,7 @@
       const seg = (cls, days) => {
         if (!days) return "";
         const w = days / max * 100;
-        const lab = w >= 10 ? fmt(days) + "d" : "";
+        const lab = fmt(days) + "d";
         return `<div class="cat-seg ${cls}" style="width:${w}%">${lab}</div>`;
       };
       const host = $("factoryBars");
@@ -1862,6 +1860,39 @@
       if (totEl) totEl.textContent = rows.length ? "Total " + fmt(total) + "d" : "";
       host.querySelectorAll("[data-factory]").forEach(el => {
         el.onclick = () => setFilter("factory", el.dataset.factory);
+      });
+    }
+
+    function renderClientBars() {
+      const jobs = filteredScope().filter(j => j.type !== "leave");
+      const { entries, total } = groupJobs(jobs, "customer");
+      const rows = entries.map(([name, v], i) => {
+        const other = Math.max(0, Math.round((v.days - v.inline - v.final) * 10) / 10);
+        const color = CLIENT_COLOR[name] || PIE_COLOR[i % PIE_COLOR.length];
+        return { name, inline: v.inline, final: v.final, other, tot: v.days, color };
+      });
+      const max = Math.max(1, ...rows.map(r => r.tot));
+      const seg = (cls, days) => {
+        if (!days) return "";
+        const w = days / max * 100;
+        const lab = fmt(days) + "d";
+        return `<div class="cat-seg ${cls}" style="width:${w}%">${lab}</div>`;
+      };
+      const host = $("clientBars");
+      const totEl = $("clientTot");
+      if (!host) return;
+      host.innerHTML = rows.length
+        ? rows.map(r => `<div class="cat-row fac-row" data-customer="${r.name}">
+            <div class="lab"><i class="dot" style="background:${r.color}"></i>${r.name}</div>
+            <div class="cat-track">
+              ${seg("inline", r.inline)}${seg("final", r.final)}${seg("other", r.other)}
+            </div>
+            <div class="cat-tot">${fmt(r.tot)}d</div>
+          </div>`).join("")
+        : `<div style="color:var(--muted);font-size:12px">No client days in filter</div>`;
+      if (totEl) totEl.textContent = rows.length ? "Total " + fmt(total) + "d" : "";
+      host.querySelectorAll("[data-customer]").forEach(el => {
+        el.onclick = () => setFilter("customer", el.dataset.customer);
       });
     }
 
@@ -2104,6 +2135,7 @@
       renderPfRings();
       renderCatBars();
       renderFactoryBars();
+      renderClientBars();
       renderAlerts();
       renderMap();
     }
