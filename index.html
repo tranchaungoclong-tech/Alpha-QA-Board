@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v79</title>
+  <title>Alpha QA — Inspection Board v80</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -762,7 +762,7 @@
         </div>
       </div>
     </div>
-    <footer>v79. Map closer to real shapes. Alert card twice as big. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v80. China is a land block, not a blob. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -797,13 +797,13 @@
     const SOURCING_COLOR = ["#FBBF24","#FB7185","#2DD4BF","#818CF8"];
     const AUDIT_COLOR = ["#A78BFA","#22D3EE","#4ADE80","#F472B6"];
     const COUNTRY = {
-      IN: { name: "India", x: 86, y: 168, color: "#F59E0B" },
-      CN: { name: "China", x: 292, y: 78, color: "#F43F5E" },
-      VN: { name: "Vietnam", x: 268, y: 198, color: "#2563EB" },
-      TH: { name: "Thailand", x: 218, y: 178, color: "#16A34A" },
-      KH: { name: "Cambodia", x: 246, y: 198, color: "#EA580C" },
-      MY: { name: "Malaysia", x: 222, y: 248, color: "#7C3AED" },
-      ID: { name: "Indonesia", x: 278, y: 308, color: "#0F766E" }
+      IN: { name: "India", x: 98, y: 155, color: "#F59E0B" },
+      CN: { name: "China", x: 300, y: 92, color: "#F43F5E" },
+      VN: { name: "Vietnam", x: 268, y: 205, color: "#2563EB" },
+      TH: { name: "Thailand", x: 214, y: 175, color: "#16A34A" },
+      KH: { name: "Cambodia", x: 242, y: 200, color: "#EA580C" },
+      MY: { name: "Malaysia", x: 218, y: 258, color: "#7C3AED" },
+      ID: { name: "Indonesia", x: 270, y: 300, color: "#0F766E" }
     };
     const MONTH_THEME = [
       { month: "#0EA5E9", ink: "#0369A1", tint: "#E0F2FE" },
@@ -1905,20 +1905,20 @@
       const max = Math.max(1, ...Object.values(bag), 1);
       const land = `
         <rect x="0" y="0" width="420" height="360" fill="#E8F4FC"/>
-        <path d="M48 92 C62 58 92 48 118 62 C138 52 158 68 164 92 C172 128 178 162 168 198 C158 228 138 248 118 242 C98 248 72 228 58 198 C42 162 38 122 48 92Z" fill="#FEF3C7" stroke="#D97706" stroke-width="1.4"/>
-        <path d="M198 28 C248 18 308 22 348 42 C378 58 398 88 392 118 C384 148 358 158 328 148 C308 168 278 158 258 138 C238 118 218 88 208 58 C202 42 198 32 198 28Z" fill="#FECACA" stroke="#E11D48" stroke-width="1.4"/>
-        <path d="M198 128 C218 118 238 128 242 152 C246 178 238 208 228 228 C214 238 198 218 196 188 C194 158 190 138 198 128Z" fill="#BBF7D0" stroke="#16A34A" stroke-width="1.4"/>
-        <path d="M228 178 C246 172 258 182 256 196 C250 210 236 212 226 200 C222 190 222 182 228 178Z" fill="#FED7AA" stroke="#EA580C" stroke-width="1.4"/>
-        <path d="M248 148 C262 142 274 158 270 188 C266 218 258 242 252 248 C240 238 236 208 238 178 C240 158 242 150 248 148Z" fill="#93C5FD" stroke="#2563EB" stroke-width="1.4"/>
-        <path d="M198 228 C222 222 238 238 234 258 C226 274 206 274 194 258 C188 244 190 232 198 228Z" fill="#DDD6FE" stroke="#7C3AED" stroke-width="1.4"/>
-        <path d="M188 288 C248 278 318 282 368 292 C378 302 358 318 308 322 C248 326 198 318 178 308 C172 300 176 292 188 288Z" fill="#99F6E4" stroke="#0F766E" stroke-width="1.4"/>
-        <text x="86" y="158" text-anchor="middle" font-size="13" font-weight="800" fill="#B45309">IN</text>
-        <text x="292" y="72" text-anchor="middle" font-size="13" font-weight="800" fill="#9F1239">CN</text>
-        <text x="218" y="168" text-anchor="middle" font-size="12" font-weight="800" fill="#166534">TH</text>
-        <text x="262" y="172" text-anchor="middle" font-size="12" font-weight="800" fill="#1E40AF">VN</text>
-        <text x="242" y="188" text-anchor="middle" font-size="10" font-weight="800" fill="#9A3412">KH</text>
-        <text x="216" y="248" text-anchor="middle" font-size="11" font-weight="800" fill="#5B21B6">MY</text>
-        <text x="278" y="312" text-anchor="middle" font-size="12" font-weight="800" fill="#115E59">ID</text>`;
+        <path d="M62 78 L92 52 L128 68 L148 108 L142 168 L118 228 L96 248 L78 210 L52 168 L48 118 Z" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
+        <path d="M198 36 L268 24 L328 30 L362 48 L388 62 L382 88 L352 96 L358 122 L348 148 L318 162 L278 158 L248 142 L228 112 L218 72 Z" fill="#FECACA" stroke="#E11D48" stroke-width="1.5"/>
+        <path d="M196 132 L228 126 L238 158 L230 198 L218 238 L204 246 L196 210 L190 168 Z" fill="#BBF7D0" stroke="#16A34A" stroke-width="1.5"/>
+        <path d="M226 178 L252 174 L258 198 L236 208 L222 196 Z" fill="#FED7AA" stroke="#EA580C" stroke-width="1.5"/>
+        <path d="M250 150 L272 146 L278 178 L268 218 L274 248 L254 252 L246 214 L248 176 Z" fill="#93C5FD" stroke="#2563EB" stroke-width="1.5"/>
+        <path d="M196 246 L236 242 L240 268 L200 274 L190 258 Z" fill="#DDD6FE" stroke="#7C3AED" stroke-width="1.5"/>
+        <path d="M168 286 L248 278 L338 282 L378 292 L368 310 L248 318 L172 308 Z" fill="#99F6E4" stroke="#0F766E" stroke-width="1.5"/>
+        <text x="98" y="148" text-anchor="middle" font-size="13" font-weight="800" fill="#B45309">IN</text>
+        <text x="300" y="86" text-anchor="middle" font-size="13" font-weight="800" fill="#9F1239">CN</text>
+        <text x="214" y="168" text-anchor="middle" font-size="12" font-weight="800" fill="#166534">TH</text>
+        <text x="262" y="186" text-anchor="middle" font-size="12" font-weight="800" fill="#1E40AF">VN</text>
+        <text x="240" y="192" text-anchor="middle" font-size="10" font-weight="800" fill="#9A3412">KH</text>
+        <text x="216" y="258" text-anchor="middle" font-size="11" font-weight="800" fill="#5B21B6">MY</text>
+        <text x="270" y="302" text-anchor="middle" font-size="12" font-weight="800" fill="#115E59">ID</text>`;
       const bubbles = Object.keys(COUNTRY).map(code => {
         const c = COUNTRY[code];
         const days = bag[code] || 0;
