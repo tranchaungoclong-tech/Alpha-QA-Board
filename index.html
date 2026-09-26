@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v76</title>
+  <title>Alpha QA — Inspection Board v77</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -700,7 +700,6 @@
       <div class="under-cal">
         <section class="card loc-card">
           <h2>Location · inspect days</h2>
-          <p class="map-note">Bubble size = visit days (not cost). Click a country to filter. Sheet droplist: IN / CN / VN / TH / KH / MY / ID.</p>
           <svg class="map-svg" id="seaMap" viewBox="0 0 420 360"></svg>
           <div class="map-leg" id="mapLegend"></div>
         </section>
@@ -761,7 +760,7 @@
         </div>
       </div>
     </div>
-    <footer>v76. Category / Factory names a bit larger. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v77. Location map: one colour each, no overlap. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -796,13 +795,13 @@
     const SOURCING_COLOR = ["#FBBF24","#FB7185","#2DD4BF","#818CF8"];
     const AUDIT_COLOR = ["#A78BFA","#22D3EE","#4ADE80","#F472B6"];
     const COUNTRY = {
-      IN: { name: "India", x: 92, y: 168, color: "#F59E0B" },
-      CN: { name: "China", x: 312, y: 72, color: "#F43F5E" },
-      VN: { name: "Vietnam", x: 308, y: 186, color: "#0EA5E9" },
-      TH: { name: "Thailand", x: 228, y: 158, color: "#22C55E" },
-      KH: { name: "Cambodia", x: 268, y: 188, color: "#F97316" },
-      MY: { name: "Malaysia", x: 238, y: 256, color: "#A78BFA" },
-      ID: { name: "Indonesia", x: 268, y: 312, color: "#14B8A6" }
+      IN: { name: "India", x: 78, y: 168, color: "#F59E0B" },
+      CN: { name: "China", x: 300, y: 68, color: "#F43F5E" },
+      VN: { name: "Vietnam", x: 338, y: 188, color: "#2563EB" },
+      TH: { name: "Thailand", x: 198, y: 168, color: "#16A34A" },
+      KH: { name: "Cambodia", x: 258, y: 198, color: "#EA580C" },
+      MY: { name: "Malaysia", x: 218, y: 268, color: "#7C3AED" },
+      ID: { name: "Indonesia", x: 300, y: 318, color: "#0F766E" }
     };
     const MONTH_THEME = [
       { month: "#0EA5E9", ink: "#0369A1", tint: "#E0F2FE" },
@@ -1903,33 +1902,32 @@
       jobs.forEach(j => { bag[j.country] = (bag[j.country] || 0) + j.days; });
       const max = Math.max(1, ...Object.values(bag), 1);
       const land = `
-        <rect x="0" y="0" width="420" height="360" fill="#E8F4FC"/>
-        <path d="M200 22 C250 8 320 10 375 32 C405 52 412 88 395 118 C378 145 340 152 310 140 C285 155 255 148 235 128 C215 108 195 85 188 55 C185 35 190 25 200 22Z" fill="#FEE2E2" stroke="#FECACA" stroke-width="1.2"/>
-        <path d="M48 88 C78 58 125 62 148 95 C162 122 168 155 158 188 C148 220 128 248 108 255 C92 248 78 220 68 188 C52 155 38 125 42 105 C44 95 44 90 48 88Z" fill="#FEF3C7" stroke="#FDE68A" stroke-width="1.2"/>
-        <path d="M195 115 C225 100 255 115 258 145 C256 165 242 178 230 188 C222 215 216 242 222 258 C210 262 202 245 204 215 C200 188 185 168 182 145 C180 125 185 115 195 115Z" fill="#DCFCE7" stroke="#BBF7D0" stroke-width="1.2"/>
-        <path d="M278 108 C300 112 318 130 316 158 C312 188 322 218 338 248 C342 262 328 270 312 258 C298 240 288 215 286 188 C284 158 270 128 278 108Z" fill="#E0F2FE" stroke="#BAE6FD" stroke-width="1.2"/>
-        <path d="M248 168 C272 160 288 172 286 192 C280 208 260 210 246 198 C238 186 238 174 248 168Z" fill="#FFEDD5" stroke="#FED7AA" stroke-width="1.2"/>
-        <path d="M208 250 C230 244 248 254 246 274 C240 292 220 294 208 278 C202 266 200 254 208 250Z" fill="#EDE9FE" stroke="#DDD6FE" stroke-width="1.2"/>
-        <path d="M278 238 C305 228 328 242 322 262 C312 276 290 274 276 258 C270 248 272 240 278 238Z" fill="#EDE9FE" stroke="#DDD6FE" stroke-width="1.2"/>
-        <path d="M175 272 C210 262 238 278 232 302 C220 322 188 324 168 306 C158 292 160 278 175 272Z" fill="#CCFBF1" stroke="#99F6E4" stroke-width="1.2"/>
-        <path d="M238 312 C280 304 330 310 355 322 C348 334 300 340 250 336 C232 332 228 318 238 312Z" fill="#CCFBF1" stroke="#99F6E4" stroke-width="1.2"/>
-        <path d="M268 262 C310 250 348 268 342 292 C328 312 292 308 270 288 C262 276 262 266 268 262Z" fill="#CCFBF1" stroke="#99F6E4" stroke-width="1.2"/>
-        <text x="312" y="78" text-anchor="middle" font-size="12" font-weight="800" fill="#9F1239">CN</text>
-        <text x="92" y="155" text-anchor="middle" font-size="12" font-weight="800" fill="#B45309">IN</text>
-        <text x="218" y="148" text-anchor="middle" font-size="11" font-weight="800" fill="#15803D">TH</text>
-        <text x="318" y="175" text-anchor="middle" font-size="11" font-weight="800" fill="#0369A1">VN</text>
-        <text x="266" y="192" text-anchor="middle" font-size="10" font-weight="800" fill="#C2410C">KH</text>
-        <text x="226" y="272" text-anchor="middle" font-size="10" font-weight="800" fill="#6D28D9">MY</text>
-        <text x="290" y="328" text-anchor="middle" font-size="11" font-weight="800" fill="#0F766E">ID</text>`;
+        <rect x="0" y="0" width="420" height="360" fill="#F1F5F9"/>
+        <path d="M42 70 C88 42 132 58 148 118 C156 168 138 228 108 248 C72 252 38 198 34 138 C32 100 34 82 42 70Z" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.6"/>
+        <path d="M210 18 C268 8 348 16 388 48 C404 78 392 118 352 128 C318 118 278 92 248 62 C228 42 214 28 210 18Z" fill="#FEE2E2" stroke="#F43F5E" stroke-width="1.6"/>
+        <path d="M168 108 C208 98 232 122 228 158 C222 198 208 228 198 238 C178 232 162 188 160 148 C160 122 164 112 168 108Z" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.6"/>
+        <path d="M232 168 C258 162 274 176 270 196 C262 214 242 216 228 200 C222 186 224 172 232 168Z" fill="#FFEDD5" stroke="#EA580C" stroke-width="1.6"/>
+        <path d="M292 128 C328 138 352 168 348 208 C338 248 328 268 318 272 C300 258 286 218 284 178 C284 148 286 132 292 128Z" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.6"/>
+        <path d="M188 248 C222 242 240 258 236 282 C226 302 200 304 184 286 C176 270 178 252 188 248Z" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.6"/>
+        <path d="M248 292 C318 282 372 298 378 318 C360 338 300 344 248 338 C232 332 232 300 248 292Z" fill="#CCFBF1" stroke="#0F766E" stroke-width="1.6"/>
+        <text x="78" y="158" text-anchor="middle" font-size="13" font-weight="800" fill="#B45309">IN</text>
+        <text x="300" y="62" text-anchor="middle" font-size="13" font-weight="800" fill="#9F1239">CN</text>
+        <text x="198" y="148" text-anchor="middle" font-size="12" font-weight="800" fill="#166534">TH</text>
+        <text x="338" y="168" text-anchor="middle" font-size="12" font-weight="800" fill="#1E40AF">VN</text>
+        <text x="250" y="186" text-anchor="middle" font-size="11" font-weight="800" fill="#9A3412">KH</text>
+        <text x="210" y="258" text-anchor="middle" font-size="11" font-weight="800" fill="#5B21B6">MY</text>
+        <text x="300" y="328" text-anchor="middle" font-size="12" font-weight="800" fill="#115E59">ID</text>`;
       const bubbles = Object.keys(COUNTRY).map(code => {
         const c = COUNTRY[code];
         const days = bag[code] || 0;
-        const r = days ? 10 + (days / max) * 22 : 7;
+        const r = days ? 11 + (days / max) * 16 : 6;
         const on = f.country === code;
-        const fill = days ? c.color : "#CBD5E1";
+        const fill = days ? c.color : "#94A3B8";
+        const labelY = c.y + r + 13;
         return `<g data-cty="${code}" style="cursor:pointer">
-          <circle cx="${c.x}" cy="${c.y}" r="${r}" fill="${fill}" fill-opacity="${days ? (on ? .95 : .72) : .25}" stroke="${on ? "#0F172A" : "#fff"}" stroke-width="${on ? 3 : 2}"/>
+          <circle cx="${c.x}" cy="${c.y}" r="${r}" fill="${fill}" fill-opacity="${days ? (on ? .95 : .88) : .35}" stroke="${on ? "#0F172A" : "#fff"}" stroke-width="${on ? 3 : 2}"/>
           ${days ? `<text x="${c.x}" y="${c.y + 4}" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">${fmt(days)}d</text>` : ""}
+          ${days ? `<text x="${c.x}" y="${labelY}" text-anchor="middle" font-size="10" font-weight="800" fill="#334155">${code}</text>` : ""}
         </g>`;
       }).join("");
       $("seaMap").innerHTML = land + bubbles;
