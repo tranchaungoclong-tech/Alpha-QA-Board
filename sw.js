@@ -1,4 +1,4 @@
-const CACHE = "qa-board-v89";
+const CACHE = "qa-board-v90";
 const PRECACHE = ["./", "./index.html", "./manifest.json", "./icon-180.png", "./icon-192.png", "./i18n.js"];
 let bellArm = null;
 
