@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v77</title>
+  <title>Alpha QA — Inspection Board v78</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -612,7 +612,7 @@
       <div class="main">
         <section class="card cal-card">
           <div class="cal-tools">
-            <button type="button" class="refresh" id="refreshBtn" title="Pull live Sheet" aria-label="Refresh live Sheet">↻</button>
+            <button type="button" class="refresh" id="refreshBtn" title="Reload page (Ctrl+Shift+R)" aria-label="Reload page">↻</button>
             <a class="form-plus" id="formPlus" href="#" target="_blank" rel="noopener noreferrer" title="Add inspection (Google Form)" aria-label="Add inspection">+</a>
             <div class="bell-dd" id="bellDd">
               <button type="button" class="bell" id="bellBtn" title="Alert settings" aria-label="Alert settings">
@@ -760,7 +760,7 @@
         </div>
       </div>
     </div>
-    <footer>v77. Location map: one colour each, no overlap. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v78. Green ↻ reloads the page like Ctrl+Shift+R. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -2684,7 +2684,20 @@
     $("dayPopPlus").onclick = ev => ev.stopPropagation();
     $("dayPop").onclick = ev => { if (ev.target.id === "dayPop") closeDayPop(); };
     document.addEventListener("keydown", ev => { if (ev.key === "Escape") closeDayPop(); });
-    $("refreshBtn").onclick = () => { refreshLive(); };
+    function hardRefresh() {
+      const go = () => location.reload();
+      const jobs = [];
+      try {
+        if (navigator.serviceWorker) {
+          jobs.push(navigator.serviceWorker.getRegistrations().then(regs => Promise.all(regs.map(r => r.unregister()))).catch(() => {}));
+        }
+      } catch (e) {}
+      try {
+        if (window.caches) jobs.push(caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).catch(() => {}));
+      } catch (e2) {}
+      Promise.all(jobs).then(go, go);
+    }
+    $("refreshBtn").onclick = () => { hardRefresh(); };
     window.addEventListener("online", () => { refreshLive(); });
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
