@@ -103,6 +103,11 @@ window.I18N = {
     cambodia: "Cambodia",
     malaysia: "Malaysia",
     indonesia: "Indonesia",
+    catCeramic: "Ceramic Pottery",
+    catPlush: "Plush toy",
+    catHandicraft: "Handicraft",
+    catCandle: "Candle",
+    catPottery: "Pottery vase",
     months: ["January","February","March","April","May","June","July","August","September","October","November","December"],
     short: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
     dow: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
@@ -211,6 +216,11 @@ window.I18N = {
     cambodia: "柬埔寨",
     malaysia: "马来西亚",
     indonesia: "印度尼西亚",
+    catCeramic: "陶瓷",
+    catPlush: "毛绒玩具",
+    catHandicraft: "工艺品",
+    catCandle: "蜡烛",
+    catPottery: "陶瓷花瓶",
     months: ["一月","二月","三月","四月","五月","六月","七月","八月","九月","十月","十一月","十二月"],
     short: ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],
     dow: ["周一","周二","周三","周四","周五","周六","周日"]
@@ -239,6 +249,15 @@ window.tType = function(type) {
 window.tCountry = function(code) {
   const map = { IN: "india", CN: "china", VN: "vietnam", TH: "thailand", KH: "cambodia", MY: "malaysia", ID: "indonesia" };
   return map[code] ? window.t(map[code]) : code;
+};
+window.tCat = function(name) {
+  const n = String(name || "").toLowerCase();
+  if (n === "ceramic pottery" || n === "ceramic") return window.t("catCeramic");
+  if (n === "plush toy" || n === "plush") return window.t("catPlush");
+  if (n === "handicraft") return window.t("catHandicraft");
+  if (n === "candle") return window.t("catCandle");
+  if (n === "pottery vase" || n === "pottery") return window.t("catPottery");
+  return name;
 };
 window.setLang = function(next) {
   window.lang = next === "zh" ? "zh" : "en";

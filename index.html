@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v88</title>
+  <title>Alpha QA — Inspection Board v89</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -777,7 +777,7 @@
         </div>
       </div>
     </div>
-    <footer>v88. Category total days. Client is top-5 ring with days on slices. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v89. Category names in 中文. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -793,7 +793,7 @@
 
   <iframe name="qaFormSink" id="qaFormSink" title="form sink" style="position:absolute;width:0;height:0;border:0;visibility:hidden"></iframe>
   <script src="sheet-config.js?v=61"></script>
-  <script src="i18n.js?v=85"></script>
+  <script src="i18n.js?v=89"></script>
   <script>
     const PEOPLE = [
       { id: "philip", name: "Philip", color: "#FB7185" },
@@ -1481,7 +1481,7 @@
         <button class="chip warn ${f.conflicts?"on":""}" data-k="conflicts" data-v="1">${t("conflictsOverload")}</button>
         <select class="chip ${f.customer!=="all"?"on":""}" id="custSel"><option value="all">${t("allClients")}</option>${clients.map(c=>`<option value="${c}" ${f.customer===c?"selected":""}>${c}</option>`).join("")}</select>
         <select class="chip ${f.factory!=="all"?"on":""}" id="facSel"><option value="all">${t("allFactories")}</option>${factories.map(c=>`<option value="${c}" ${f.factory===c?"selected":""}>${c}</option>`).join("")}</select>
-        <select class="chip ${f.category!=="all"?"on":""}" id="catSel"><option value="all">${t("allCategories")}</option>${cats.map(c=>`<option value="${c}" ${f.category===c?"selected":""}>${c}</option>`).join("")}</select>
+        <select class="chip ${f.category!=="all"?"on":""}" id="catSel"><option value="all">${t("allCategories")}</option>${cats.map(c=>`<option value="${c}" ${f.category===c?"selected":""}>${tCat(c)}</option>`).join("")}</select>
         <select class="chip ${f.country!=="all"?"on":""}" id="ctySel"><option value="all">${t("allCountries")}</option>${Object.entries(COUNTRY).map(([k,c])=>`<option value="${k}" ${f.country===k?"selected":""}>${tCountry(k)}</option>`).join("")}</select>
       `;
       wrap.querySelector("[data-reset]").onclick = () => {
@@ -2019,7 +2019,7 @@
             const iLab = r.inline ? `${fmt(r.inline)}d` : "";
             const fLab = r.final ? `${fmt(r.final)}d` : "";
             return `<div class="cat-row" data-cat="${r.name}">
-              <div class="lab">${r.name}</div>
+              <div class="lab">${tCat(r.name)}</div>
               <div class="cat-track">
                 <div class="cat-seg inline" style="width:${iw}%">${iLab}</div>
                 <div class="cat-seg final" style="width:${fw}%">${fLab}</div>
