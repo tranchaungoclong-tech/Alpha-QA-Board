@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v84</title>
+  <title>Alpha QA — Inspection Board v85</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -381,13 +381,20 @@
       display: flex; align-items: center; justify-content: flex-start; gap: 8px;
       margin-bottom: 10px;
     }
-    .cal-tools .refresh, .form-plus, .bell {
+    .cal-tools .refresh, .form-plus, .bell, .lang-btn {
       display: inline-flex; align-items: center; justify-content: center;
       width: 44px; height: 44px; border-radius: 12px;
       color: #fff; text-decoration: none;
       font: 700 22px/1 "IBM Plex Sans", sans-serif;
       box-shadow: var(--shadow); flex: 0 0 auto; cursor: pointer; border: 0;
     }
+    .lang-btn {
+      background: #0F172A; font-size: 13px; letter-spacing: .04em; gap: 0;
+      flex-direction: column; line-height: 1.05; padding: 4px 0;
+    }
+    .lang-btn small { font-size: 9px; font-weight: 700; color: #94A3B8; }
+    .lang-btn b { font-size: 13px; font-weight: 800; }
+    html[lang="zh-CN"] .lang-btn b { letter-spacing: 0; }
     .cal-tools .refresh {
       background: #22C55E; font-size: 20px;
     }
@@ -504,7 +511,10 @@
       .nav button { min-width: 36px; min-height: 36px; padding: 6px 8px; font-size: 14px; border-radius: 10px; }
       .nav #monthBtn, .nav #yearBtn { min-width: 56px; font-size: 15px; }
       .cal-tools { margin-bottom: 8px; gap: 6px; }
-      .cal-tools .refresh, .form-plus, .bell { width: 36px; height: 36px; font-size: 20px; border-radius: 10px; }
+      .cal-tools .refresh, .form-plus, .bell, .lang-btn { width: 36px; height: 36px; font-size: 20px; border-radius: 10px; }
+      .lang-btn { font-size: 11px; }
+      .lang-btn small { font-size: 8px; }
+      .lang-btn b { font-size: 11px; }
       .form-plus { font-size: 22px; }
       .filters {
         position: sticky; top: 0; z-index: 30;
@@ -616,6 +626,10 @@
           <div class="cal-tools">
             <button type="button" class="refresh" id="refreshBtn" title="Reload page (Ctrl+Shift+R)" aria-label="Reload page">↻</button>
             <a class="form-plus" id="formPlus" href="#" target="_blank" rel="noopener noreferrer" title="Add inspection (Google Form)" aria-label="Add inspection">+</a>
+            <button type="button" class="lang-btn" id="langBtn" title="English / 中文" aria-label="Switch language">
+              <small id="langOther">中文</small>
+              <b id="langNow">EN</b>
+            </button>
             <div class="bell-dd" id="bellDd">
               <button type="button" class="bell" id="bellBtn" title="Alert settings" aria-label="Alert settings">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -712,7 +726,7 @@
         </section>
         <section class="card factory-up">
           <h2>Factory</h2>
-          <div class="cat-key">
+          <div class="cat-key has-other">
             <span><i style="background:#38BDF8"></i>Inline</span>
             <span><i style="background:#FB7185"></i>Final</span>
             <span><i style="background:#94A3B8"></i>Other</span>
@@ -732,7 +746,7 @@
         </section>
         <section class="card">
           <h2>Client</h2>
-          <div class="cat-key">
+          <div class="cat-key has-other">
             <span><i style="background:#38BDF8"></i>Inline</span>
             <span><i style="background:#FB7185"></i>Final</span>
             <span><i style="background:#94A3B8"></i>Other</span>
@@ -765,7 +779,7 @@
         </div>
       </div>
     </div>
-    <footer>v84. Map redraw: countries apart, days on the land (no covering dots). Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v85. EN / 中文 switch. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -781,6 +795,7 @@
 
   <iframe name="qaFormSink" id="qaFormSink" title="form sink" style="position:absolute;width:0;height:0;border:0;visibility:hidden"></iframe>
   <script src="sheet-config.js?v=61"></script>
+  <script src="i18n.js?v=85"></script>
   <script>
     const PEOPLE = [
       { id: "philip", name: "Philip", color: "#FB7185" },
@@ -899,8 +914,90 @@
     );
     let JOBS = DEMO_JOBS.slice();
 
-    const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-    const SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const MONTHS_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const SHORT_EN = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    function MONTHS() { return t("months"); }
+    function SHORT() { return t("short"); }
+    function DOW() { return t("dow"); }
+    function paintLangBtn() {
+      const now = $("langNow");
+      const other = $("langOther");
+      if (now) now.textContent = lang === "zh" ? "中文" : "EN";
+      if (other) other.textContent = lang === "zh" ? "EN" : "中文";
+      const btn = $("langBtn");
+      if (btn) btn.title = lang === "zh" ? "切换 English" : "切换中文";
+    }
+    function applyChrome() {
+      paintLangBtn();
+      const setTxt = (sel, key) => { const el = document.querySelector(sel); if (el) el.textContent = t(key); };
+      setTxt(".pf-kpi.pass span", "pass");
+      setTxt(".pf-kpi.fail span", "fail");
+      const h1 = document.querySelector("h1");
+      if (h1) h1.childNodes[0].textContent = yearMode ? t("yearTitle") : t("calTitle");
+      $("monthName") && ($("monthName").textContent = yearMode ? t("yearWord") : MONTHS()[view.m]);
+      const qh = document.querySelector(".side .card:nth-child(1) h2");
+      if (qh) qh.innerHTML = `<span aria-hidden="true">🏆</span> ${t("quality")}`;
+      const qn = document.querySelector(".side .card:nth-child(1) .metric-note");
+      if (qn) qn.textContent = t("qualityNote");
+      const wh = document.querySelector(".side .card:nth-child(2) h2");
+      if (wh) wh.innerHTML = `${t("workload")} <span style="color:var(--muted);font-weight:500">${t("dayBase")}</span>`;
+      const ah = document.querySelector(".side .card:nth-child(3) h2");
+      if (ah) ah.textContent = t("alerts");
+      const loc = document.querySelector(".loc-card h2");
+      if (loc) loc.textContent = t("locTitle");
+      const cat = document.querySelector(".cat-card h2");
+      if (cat) cat.textContent = t("catTitle");
+      const fac = document.querySelector(".factory-up h2");
+      if (fac) fac.textContent = t("factory");
+      const pf = document.querySelector(".pf-slim h2");
+      if (pf) pf.textContent = t("passFail");
+      const cards = document.querySelectorAll(".donuts > .card > h2");
+      if (cards[1]) cards[1].textContent = t("client");
+      const vh = document.querySelectorAll(".visit-family .card h2");
+      if (vh[0]) vh[0].textContent = t("visitType");
+      if (vh[1]) vh[1].textContent = t("sourcingH");
+      if (vh[2]) vh[2].textContent = t("auditH");
+      document.querySelectorAll(".cat-key").forEach(el => {
+        el.innerHTML = `<span><i style="background:#38BDF8"></i>${t("inline")}</span><span><i style="background:#FB7185"></i>${t("final")}</span>` +
+          (el.classList.contains("has-other") ? `<span><i style="background:#94A3B8"></i>${t("other")}</span>` : "");
+      });
+      const yh = document.querySelector(".year-head h2");
+      if (yh) yh.childNodes[0].textContent = t("yearlyH");
+      const yb = $("yearBack");
+      if (yb) yb.textContent = t("backMonth");
+      const yn = document.querySelector("#yearPanel .metric-note");
+      if (yn) yn.textContent = t("yearNote");
+      const yb1 = document.querySelectorAll(".year-block h3");
+      if (yb1[0]) yb1[0].textContent = t("byMonth");
+      if (yb1[1]) yb1[1].textContent = t("byPic");
+      const bl = $("bellBtn");
+      if (bl) { bl.title = t("alertSet"); bl.setAttribute("aria-label", t("alertSet")); }
+      const rb = $("refreshBtn");
+      if (rb) { rb.title = t("reload"); rb.setAttribute("aria-label", t("reload")); }
+      const fp = $("formPlus");
+      if (fp) { fp.title = t("addInsp"); fp.setAttribute("aria-label", t("addInsp")); }
+      const dpp = $("dayPopPlus");
+      if (dpp) { dpp.title = t("addDay"); dpp.setAttribute("aria-label", t("addDay")); }
+      const dpc = $("dayPopClose");
+      if (dpc) dpc.setAttribute("aria-label", t("close"));
+      $("prev") && $("prev").setAttribute("aria-label", t("prev"));
+      $("next") && $("next").setAttribute("aria-label", t("next"));
+      const bh = document.querySelector(".bell-panel h3");
+      if (bh) bh.textContent = t("alertsH");
+      const rows = document.querySelectorAll(".bell-row label");
+      if (rows[0]) rows[0].textContent = t("time");
+      if (rows[1]) rows[1].textContent = t("times");
+      if (rows[2]) rows[2].textContent = t("pic");
+      if (rows[3]) rows[3].textContent = t("conflicts");
+      const who = $("bellWho");
+      if (who && who.options[0]) who.options[0].textContent = t("allPics");
+      const arm = $("bellArm");
+      if (arm) {
+        const on = arm.classList.contains("off") ? false : (loadBell().on);
+        arm.textContent = on ? t("alertOff") : t("alertOn");
+      }
+      document.querySelectorAll(".weekdays span").forEach((el, i) => { el.textContent = DOW()[i]; });
+    }
     function vnNow() {
       const parts = new Intl.DateTimeFormat("en-CA", {
         timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit",
@@ -1330,11 +1427,11 @@
     }
     function warnTag(meta) {
       if (!meta || !meta.warn) return "";
-      if (meta.overload && meta.conflict) return "Overload / conflict";
-      if (meta.overload && meta.weekend) return "Overload / weekend";
-      if (meta.overload) return "Overload";
-      if (meta.weekend) return "Weekend inspect";
-      if (meta.conflict) return "Conflict";
+      if (meta.overload && meta.conflict) return t("overloadConflict");
+      if (meta.overload && meta.weekend) return t("overloadWeekend");
+      if (meta.overload) return t("overload");
+      if (meta.weekend) return t("weekend");
+      if (meta.conflict) return t("conflict");
       return "";
     }
     function filteredFrom(all) {
@@ -1364,30 +1461,30 @@
       const cats = [...new Set(jobs.map(j => j.category).filter(Boolean))];
       const wrap = $("filters");
       const picOn = f.pic !== "all";
-      const picLabel = picOn ? pic(f.pic).name : `PIC (${PEOPLE.length})`;
+      const picLabel = picOn ? pic(f.pic).name : t("picN", { n: PEOPLE.length });
       wrap.innerHTML = `
-        <span class="lab">Filter</span>
-        <button class="chip all ${f.pic==="all"&&f.customer==="all"&&f.factory==="all"&&f.type==="all"&&f.result==="all"&&f.category==="all"&&f.country==="all"&&!f.conflicts&&!f.leave?"on":""}" data-reset>All</button>
+        <span class="lab">${t("filter")}</span>
+        <button class="chip all ${f.pic==="all"&&f.customer==="all"&&f.factory==="all"&&f.type==="all"&&f.result==="all"&&f.category==="all"&&f.country==="all"&&!f.conflicts&&!f.leave?"on":""}" data-reset>${t("all")}</button>
         <div class="pic-dd" id="picDd">
           <button class="chip name pic ${picOn?"on":""}" id="picBtn">${picLabel}</button>
           <div class="pic-menu" id="picMenu">
-            <input class="pic-search" id="picSearch" placeholder="Search PIC…" autocomplete="off" />
-            <button class="pic-opt ${f.pic==="all"?"on":""}" data-k="pic" data-v="all">All PICs</button>
+            <input class="pic-search" id="picSearch" placeholder="${t("searchPic")}" autocomplete="off" />
+            <button class="pic-opt ${f.pic==="all"?"on":""}" data-k="pic" data-v="all">${t("allPics")}</button>
             ${PEOPLE.map(p => `<button class="pic-opt ${f.pic===p.id?"on":""}" data-k="pic" data-v="${p.id}" data-name="${p.name.toLowerCase()}"><i class="sw" style="background:${p.color}"></i>${p.name}</button>`).join("")}
           </div>
         </div>
-        <button class="chip type ${f.type==="inline"?"on":""}" data-k="type" data-v="inline">Inline</button>
-        <button class="chip type ${f.type==="final"?"on":""}" data-k="type" data-v="final">Final</button>
-        <button class="chip type ${f.type==="sourcing"?"on":""}" data-k="type" data-v="sourcing">Sourcing</button>
-        <button class="chip type ${f.type==="audit"?"on":""}" data-k="type" data-v="audit">Audit</button>
-        <button class="chip result ${f.result==="pass"?"on":""}" data-k="result" data-v="pass">Pass</button>
-        <button class="chip result ${f.result==="fail"?"on":""}" data-k="result" data-v="fail">Fail</button>
-        <button class="chip leave ${f.leave||f.type==="leave"?"on":""}" data-k="leave" data-v="1">Annual leave</button>
-        <button class="chip warn ${f.conflicts?"on":""}" data-k="conflicts" data-v="1">Conflicts / overload</button>
-        <select class="chip ${f.customer!=="all"?"on":""}" id="custSel"><option value="all">All clients</option>${clients.map(c=>`<option value="${c}" ${f.customer===c?"selected":""}>${c}</option>`).join("")}</select>
-        <select class="chip ${f.factory!=="all"?"on":""}" id="facSel"><option value="all">All factories</option>${factories.map(c=>`<option value="${c}" ${f.factory===c?"selected":""}>${c}</option>`).join("")}</select>
-        <select class="chip ${f.category!=="all"?"on":""}" id="catSel"><option value="all">All categories</option>${cats.map(c=>`<option value="${c}" ${f.category===c?"selected":""}>${c}</option>`).join("")}</select>
-        <select class="chip ${f.country!=="all"?"on":""}" id="ctySel"><option value="all">All countries</option>${Object.entries(COUNTRY).map(([k,c])=>`<option value="${k}" ${f.country===k?"selected":""}>${c.name}</option>`).join("")}</select>
+        <button class="chip type ${f.type==="inline"?"on":""}" data-k="type" data-v="inline">${t("inline")}</button>
+        <button class="chip type ${f.type==="final"?"on":""}" data-k="type" data-v="final">${t("final")}</button>
+        <button class="chip type ${f.type==="sourcing"?"on":""}" data-k="type" data-v="sourcing">${t("sourcing")}</button>
+        <button class="chip type ${f.type==="audit"?"on":""}" data-k="type" data-v="audit">${t("audit")}</button>
+        <button class="chip result ${f.result==="pass"?"on":""}" data-k="result" data-v="pass">${t("pass")}</button>
+        <button class="chip result ${f.result==="fail"?"on":""}" data-k="result" data-v="fail">${t("fail")}</button>
+        <button class="chip leave ${f.leave||f.type==="leave"?"on":""}" data-k="leave" data-v="1">${t("annualLeave")}</button>
+        <button class="chip warn ${f.conflicts?"on":""}" data-k="conflicts" data-v="1">${t("conflictsOverload")}</button>
+        <select class="chip ${f.customer!=="all"?"on":""}" id="custSel"><option value="all">${t("allClients")}</option>${clients.map(c=>`<option value="${c}" ${f.customer===c?"selected":""}>${c}</option>`).join("")}</select>
+        <select class="chip ${f.factory!=="all"?"on":""}" id="facSel"><option value="all">${t("allFactories")}</option>${factories.map(c=>`<option value="${c}" ${f.factory===c?"selected":""}>${c}</option>`).join("")}</select>
+        <select class="chip ${f.category!=="all"?"on":""}" id="catSel"><option value="all">${t("allCategories")}</option>${cats.map(c=>`<option value="${c}" ${f.category===c?"selected":""}>${c}</option>`).join("")}</select>
+        <select class="chip ${f.country!=="all"?"on":""}" id="ctySel"><option value="all">${t("allCountries")}</option>${Object.entries(COUNTRY).map(([k,c])=>`<option value="${k}" ${f.country===k?"selected":""}>${tCountry(k)}</option>`).join("")}</select>
       `;
       wrap.querySelector("[data-reset]").onclick = () => {
         f = { pic: "all", customer: "all", factory: "all", type: "all", result: "all", category: "all", country: "all", conflicts: false, leave: false };
@@ -1497,16 +1594,15 @@
       if (!pop) return;
       pendingDayKey = key;
       const d = parse(key);
-      const DOW = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
       const tag = warnTag(meta);
       const tagBit = tag ? " · " + tag : "";
-      $("dayPopTitle").textContent = `${DOW[mon0(d)]} ${d.getDate()} ${SHORT[d.getMonth()]}${tagBit}`;
+      $("dayPopTitle").textContent = `${DOW()[mon0(d)]} ${d.getDate()} ${SHORT()[d.getMonth()]}${tagBit}`;
       const plus = $("dayPopPlus");
       if (plus) plus.href = formViewUrl(key);
       const body = $("dayPopBody");
       body.innerHTML = "";
       if (!list.length) {
-        body.innerHTML = `<div class="day-pop-empty">No visit this day.</div>`;
+        body.innerHTML = `<div class="day-pop-empty">${t("noVisit")}</div>`;
       } else {
         list.forEach(j => {
           const card = jobCard(j, true);
@@ -1536,17 +1632,17 @@
       const cur = resultValue(j.result);
       const stamp = editable && j.type !== "leave"
         ? `<select class="stamp-sel ${sm.cls}" data-result="1" aria-label="Inspection result">
-             <option value="pass"${cur === "pass" ? " selected" : ""}>Pass</option>
-             <option value="fail"${cur === "fail" ? " selected" : ""}>Fail</option>
-             <option value="pending"${cur === "pending" ? " selected" : ""}>Pending</option>
+             <option value="pass"${cur === "pass" ? " selected" : ""}>${t("pass")}</option>
+             <option value="fail"${cur === "fail" ? " selected" : ""}>${t("fail")}</option>
+             <option value="pending"${cur === "pending" ? " selected" : ""}>${t("pending")}</option>
            </select>`
-        : `<span class="stamp ${sm.cls}">${sm.label}</span>`;
-      const re = j.visit > 1 ? `<span class="re">(Re-inspect)</span>` : "";
+        : `<span class="stamp ${sm.cls}">${t(cur === "pass" ? "pass" : cur === "fail" ? "fail" : "pending")}</span>`;
+      const re = j.visit > 1 ? `<span class="re">${t("reinspectTag")}</span>` : "";
       el.innerHTML = j.type === "leave"
-        ? `<b>${p.name}</b><div class="row"><span class="ico">🌴</span> Annual leave</div>`
+        ? `<b>${p.name}</b><div class="row"><span class="ico">🌴</span> ${t("annualLeave")}</div>`
         : `<b>${p.name} <span class="dur">(${dur})</span></b>
-           <div class="row"><span class="ico">🏭</span> ${j.factory} <span class="ico">👤</span> ${j.customer}${j.country && j.country !== "VN" ? ` · ${j.country}` : ""}</div>
-           <div class="row"><span class="ico">📌</span> ${j.type[0].toUpperCase()+j.type.slice(1)} | ${stamp} ${re}</div>`;
+           <div class="row"><span class="ico">🏭</span> ${j.factory} <span class="ico">👤</span> ${j.customer}${j.country && j.country !== "VN" ? ` · ${tCountry(j.country)}` : ""}</div>
+           <div class="row"><span class="ico">📌</span> ${tType(j.type)} | ${stamp} ${re}</div>`;
       const sel = el.querySelector("select.stamp-sel");
       if (sel) {
         sel.addEventListener("pointerup", ev => ev.stopPropagation());
@@ -1565,7 +1661,6 @@
       if (!box) return;
       box.innerHTML = "";
       const last = new Date(view.y, view.m + 1, 0).getDate();
-      const DOW = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
       for (let d = 1; d <= last; d++) {
         const key = iso(view.y, view.m, d);
         const dt = new Date(view.y, view.m, d);
@@ -1578,11 +1673,11 @@
           + (meta.warn ? " conflict" : "")
           + (hitDate === key ? " hit" : "");
         const tag = warnTag(meta);
-        row.innerHTML = `<div class="agenda-head"><b>${d}</b><span>${DOW[mon0(dt)]}</span>${tag ? `<em>${tag}</em>` : ""}</div>`;
+        row.innerHTML = `<div class="agenda-head"><b>${d}</b><span>${DOW()[mon0(dt)]}</span>${tag ? `<em>${tag}</em>` : ""}</div>`;
         if (!list.length) {
           const empty = document.createElement("div");
           empty.className = "agenda-empty";
-          empty.textContent = "No visit";
+          empty.textContent = t("noVisit");
           row.appendChild(empty);
         } else {
           list.forEach(j => row.appendChild(jobCard(j, false)));
@@ -1621,13 +1716,13 @@
       const rows = stats(filteredScope(), yearMode ? YEAR_DAYS : WORKDAYS).filter(p => p.role !== "manager");
       $("board").innerHTML = `
         <table class="lb">
-          <thead><tr><th>Staff</th><th>Days (Occ.)</th><th>Pass Rate</th></tr></thead>
+          <thead><tr><th>${t("staff")}</th><th>${t("daysOcc")}</th><th>${t("passRate")}</th></tr></thead>
           <tbody>
             ${rows.map(r => `
               <tr data-pic="${r.id}">
                 <td class="name">${r.name}</td>
                 <td class="load">${fmt(r.days)}d (${r.pct}%)</td>
-                <td class="${rateClass(r.rate)}" title="${r.rate == null ? "no closed jobs" : r.passed + " pass / " + r.closed + " closed jobs"}">${r.rate == null ? "—" : r.rate + "%"}</td>
+                <td class="${rateClass(r.rate)}" title="${r.rate == null ? t("noClosed") : t("closedJobsTitle", { p: r.passed, c: r.closed })}">${r.rate == null ? "—" : r.rate + "%"}</td>
               </tr>`).join("")}
           </tbody>
         </table>`;
@@ -1661,7 +1756,7 @@
         el.onclick = () => setFilter("pic", el.dataset.pic);
       });
       const top = rows[0];
-      $("barBig").innerHTML = top ? `${fmt(top.days)}<small>${top.name} · most days</small>` : "";
+      $("barBig").innerHTML = top ? `${fmt(top.days)}<small>${t("mostDays", { n: top.name })}</small>` : "";
     }
 
     function polar(cx, cy, r, deg) {
@@ -1693,6 +1788,7 @@
     }
 
     function paintDonut(svgId, legendId, data, colorOf, onPick, unit, compact, fiLegend) {
+      if (!$(svgId) || !$(legendId)) return;
       const { entries, total } = data;
       const cx = 140, cy = 140;
       const R = compact ? 122 : 118;
@@ -1721,7 +1817,7 @@
           }
         });
       }
-      const centerLabel = fiLegend ? "days" : (unit || "inspect days");
+      const centerLabel = fiLegend ? t("daysUnit") : (unit === "jobs" ? t("jobsUnit") : t("inspectDaysUnit"));
       paths += `<text x="${cx}" y="${cy - (fiLegend ? 4 : 6)}" text-anchor="middle" font-size="${centerSize}" font-family="${fiLegend ? "IBM Plex Sans" : "Newsreader"}" font-weight="800" fill="#0F172A">${fmt(total)}</text>
         <text x="${cx}" y="${cy + (fiLegend ? 22 : 16)}" text-anchor="middle" font-size="${unitSize}" font-weight="600" fill="#64748B">${centerLabel}</text>`;
       $(svgId).innerHTML = paths;
@@ -1786,15 +1882,20 @@
     function renderDonut() {
       const jobs = filteredScope().filter(j => j.type !== "leave");
       const typed = groupJobs(jobs, "type");
-      typed.entries = typed.entries.map(([k, v]) => [k[0].toUpperCase() + k.slice(1), v]);
+      typed.entries = typed.entries.map(([k, v]) => [tType(k), v]);
       paintDonut("typeDonut", "typeLegend",
         typed,
-        name => TYPE_COLOR[name.toLowerCase()] || "#94A3B8",
-        name => setFilter("type", name.toLowerCase()));
+        name => TYPE_COLOR[{ [t("inline")]: "inline", [t("final")]: "final", [t("sourcing")]: "sourcing", [t("audit")]: "audit" }[name] || String(name).toLowerCase()] || "#94A3B8",
+        name => {
+          const raw = { [t("inline")]: "inline", [t("final")]: "final", [t("sourcing")]: "sourcing", [t("audit")]: "audit" }[name] || String(name).toLowerCase();
+          setFilter("type", raw);
+        });
+      const closed = closedResults(jobs);
+      closed.entries = closed.entries.map(([k, v]) => [k === "Pass" ? t("pass") : t("fail"), v]);
       paintDonut("resultDonut", "resultLegend",
-        closedResults(jobs),
-        name => RESULT_COLOR[name] || "#94A3B8",
-        name => setFilter("result", name.toLowerCase()),
+        closed,
+        name => RESULT_COLOR[name === t("pass") ? "Pass" : "Fail"] || "#94A3B8",
+        name => setFilter("result", name === t("pass") ? "pass" : "fail"),
         "jobs");
       const srcJobs = jobs.filter(j => j.type === "sourcing");
       const srcFac = [...new Set(srcJobs.map(j => j.factory).filter(Boolean))];
@@ -1818,19 +1919,19 @@
       const items = [];
       Object.entries(by).forEach(([date, list]) => {
         const m = dayMeta(list);
-        if (m.overload) items.push({ cls: "o", date, t: `${date} — overload (${[...new Set(m.inspect.map(j=>pic(j.pic).name))].join(", ")})` });
-        if (m.weekend) items.push({ cls: "c", date, t: `${date} — Weekend inspect` });
-        else if (m.conflict) items.push({ cls: "c", date, t: `${date} — conflict (same PIC twice)` });
-        list.filter(j => j.type === "leave").forEach(j => items.push({ cls: "l", date, t: `${date} — ${pic(j.pic).name} on annual leave` }));
+        if (m.overload) items.push({ cls: "o", date, t: t("alertOverload", { d: date, who: [...new Set(m.inspect.map(j=>pic(j.pic).name))].join(", ") }) });
+        if (m.weekend) items.push({ cls: "c", date, t: t("alertWeekend", { d: date }) });
+        else if (m.conflict) items.push({ cls: "c", date, t: t("alertConflict", { d: date }) });
+        list.filter(j => j.type === "leave").forEach(j => items.push({ cls: "l", date, t: t("alertLeave", { d: date, who: pic(j.pic).name }) }));
       });
       const loadBase = yearMode ? YEAR_DAYS : WORKDAYS;
       const loadCut = yearMode ? 192 : 16;
       stats(scopeJobs(), loadBase).forEach(p => {
-        if (p.days > loadCut) items.push({ cls: "o", date: "", t: `${p.name} at ${p.pct}% load (>${loadCut} / ${loadBase} days)` });
+        if (p.days > loadCut) items.push({ cls: "o", date: "", t: t("alertLoad", { who: p.name, pct: p.pct, cut: loadCut, base: loadBase }) });
       });
       $("alerts").innerHTML = items.length
         ? items.map(i => `<div class="item ${i.cls}${hitDate && i.date===hitDate?" on":""}" data-date="${i.date || ""}">${i.t}</div>`).join("")
-        : `<div class="item" style="background:#F1F5F9;color:var(--muted)">No alerts this month.</div>`;
+        : `<div class="item" style="background:#F1F5F9;color:var(--muted)">${t("noAlerts")}</div>`;
       $("alerts").querySelectorAll("[data-date]").forEach(el => {
         el.addEventListener("pointerup", ev => {
           if (ev.pointerType === "mouse" && ev.button !== 0) return;
@@ -1870,8 +1971,8 @@
             </div>
             <div class="cat-tot">${fmt(r.tot)}d</div>
           </div>`).join("")
-        : `<div style="color:var(--muted);font-size:12px">No factory days in filter</div>`;
-      if (totEl) totEl.textContent = rows.length ? "Total " + fmt(total) + "d" : "";
+        : `<div style="color:var(--muted);font-size:12px">${t("noFac")}</div>`;
+      if (totEl) totEl.textContent = rows.length ? t("total", { n: fmt(total) }) : "";
       host.querySelectorAll("[data-factory]").forEach(el => {
         el.onclick = () => setFilter("factory", el.dataset.factory);
       });
@@ -1903,8 +2004,8 @@
             </div>
             <div class="cat-tot">${fmt(r.tot)}d</div>
           </div>`).join("")
-        : `<div style="color:var(--muted);font-size:12px">No client days in filter</div>`;
-      if (totEl) totEl.textContent = rows.length ? "Total " + fmt(total) + "d" : "";
+        : `<div style="color:var(--muted);font-size:12px">${t("noCli")}</div>`;
+      if (totEl) totEl.textContent = rows.length ? t("total", { n: fmt(total) }) : "";
       host.querySelectorAll("[data-customer]").forEach(el => {
         el.onclick = () => setFilter("customer", el.dataset.customer);
       });
@@ -1937,7 +2038,7 @@
               <div class="cat-tot">${fmt(r.tot)}d</div>
             </div>`;
           }).join("")
-        : `<div style="color:var(--muted);font-size:12px">No inline / final days in filter</div>`;
+        : `<div style="color:var(--muted);font-size:12px">${t("noCat")}</div>`;
       $("catBars").querySelectorAll("[data-cat]").forEach(el => {
         el.onclick = () => setFilter("category", el.dataset.cat);
       });
@@ -1964,7 +2065,7 @@
       });
       $("mapLegend").innerHTML = Object.entries(COUNTRY).map(([code, c]) => {
         const days = bag[code] || 0;
-        return `<span class="${f.country===code?"on":""}" data-cty="${code}"><i class="dot" style="background:${c.color}"></i>${c.name} · ${fmt(days)}d</span>`;
+        return `<span class="${f.country===code?"on":""}" data-cty="${code}"><i class="dot" style="background:${c.color}"></i>${tCountry(code)} · ${fmt(days)}d</span>`;
       }).join("");
       $("mapLegend").querySelectorAll("[data-cty]").forEach(el => {
         el.onclick = () => setFilter("country", el.dataset.cty);
@@ -1972,11 +2073,11 @@
     }
 
     function applyMonthTheme() {
-      const t = MONTH_THEME[view.m];
+      const theme = MONTH_THEME[view.m];
       const root = document.documentElement.style;
-      root.setProperty("--month", t.month);
-      root.setProperty("--month-ink", t.ink);
-      root.setProperty("--month-tint", t.tint);
+      root.setProperty("--month", theme.month);
+      root.setProperty("--month-ink", theme.ink);
+      root.setProperty("--month-tint", theme.tint);
     }
 
     function monthRollup(jobs, m) {
@@ -2009,22 +2110,22 @@
       const passed = closed.filter(j => j.result === "pass").length;
       const leave = jobs.filter(j => j.type === "leave").length;
       $("yearKpis").innerHTML = `
-        <div class="kpi"><em>Inspect days</em><b>${fmt(days)}</b></div>
-        <div class="kpi"><em>Closed jobs</em><b>${closed.length}</b></div>
-        <div class="kpi"><em>Pass %</em><b>${closed.length ? Math.round(passed / closed.length * 100) + "%" : "—"}</b></div>
-        <div class="kpi"><em>Re-inspect</em><b>${inspect.filter(j => j.visit > 1).length}</b></div>
-        <div class="kpi"><em>Leave days</em><b>${leave}</b></div>`;
-      const months = MONTHS.map((_, m) => monthRollup(jobs, m));
+        <div class="kpi"><em>${t("inspectDays")}</em><b>${fmt(days)}</b></div>
+        <div class="kpi"><em>${t("closedJobs")}</em><b>${closed.length}</b></div>
+        <div class="kpi"><em>${t("passPct")}</em><b>${closed.length ? Math.round(passed / closed.length * 100) + "%" : "—"}</b></div>
+        <div class="kpi"><em>${t("reinspect")}</em><b>${inspect.filter(j => j.visit > 1).length}</b></div>
+        <div class="kpi"><em>${t("leaveDays")}</em><b>${leave}</b></div>`;
+      const months = MONTHS_EN.map((_, m) => monthRollup(jobs, m));
       $("yearMonths").innerHTML = `
         <table class="ys">
           <thead><tr>
-            <th>Month</th><th class="num">Days</th><th class="num">Inline</th><th class="num">Final</th>
-            <th class="num">Sourcing</th><th class="num">Audit</th><th class="num">Jobs</th><th class="num">Pass %</th>
+            <th>${t("month")}</th><th class="num">${t("days")}</th><th class="num">${t("inline")}</th><th class="num">${t("final")}</th>
+            <th class="num">${t("sourcing")}</th><th class="num">${t("audit")}</th><th class="num">${t("jobs")}</th><th class="num">${t("passPct")}</th>
           </tr></thead>
           <tbody>
             ${months.map(r => `
               <tr class="click" data-m="${r.m}">
-                <td class="name">${SHORT[r.m]}</td>
+                <td class="name">${SHORT()[r.m]}</td>
                 <td class="num">${fmt(r.days)}</td>
                 <td class="num">${fmt(r.inline)}</td>
                 <td class="num">${fmt(r.final)}</td>
@@ -2034,7 +2135,7 @@
                 <td class="num ${rateClass(r.rate)}">${r.rate == null ? "—" : r.rate + "%"}</td>
               </tr>`).join("")}
             <tr>
-              <td class="name">Year</td>
+              <td class="name">${t("yearRow")}</td>
               <td class="num">${fmt(days)}</td>
               <td class="num">${fmt(inspect.filter(j=>j.type==="inline").reduce((s,j)=>s+j.days,0))}</td>
               <td class="num">${fmt(inspect.filter(j=>j.type==="final").reduce((s,j)=>s+j.days,0))}</td>
@@ -2051,7 +2152,7 @@
       const pics = stats(jobs, YEAR_DAYS);
       $("yearPics").innerHTML = `
         <table class="ys">
-          <thead><tr><th>PIC</th><th class="num">Days</th><th class="num">Occ. %</th><th class="num">Closed</th><th class="num">Pass %</th></tr></thead>
+          <thead><tr><th>${t("pic")}</th><th class="num">${t("days")}</th><th class="num">${t("occPct")}</th><th class="num">${t("closed")}</th><th class="num">${t("passPct")}</th></tr></thead>
           <tbody>
             ${pics.map(r => `
               <tr class="click" data-pic="${r.id}">
@@ -2109,16 +2210,14 @@
     function render() {
       document.body.classList.toggle("year-mode", yearMode);
       applyMonthTheme();
-      $("monthName").textContent = yearMode ? "Year" : MONTHS[view.m];
+      applyChrome();
       $("yearName").textContent = view.y;
-      const h1 = document.querySelector("h1");
-      if (h1) h1.childNodes[0].textContent = yearMode ? "Yearly Summary — " : "Full Month Calendar — ";
       renderYearMenu();
-      $("monthBtn").textContent = yearMode ? "Year" : SHORT[view.m];
+      $("monthBtn").textContent = yearMode ? t("yearWord") : SHORT()[view.m];
       renderFilters();
       if (yearMode) renderYearSummary();
       else renderCal();
-      $("yearBtn").title = yearMode ? "Pick another year" : "Open yearly summary";
+      $("yearBtn").title = yearMode ? t("pickYear") : t("openYear");
       renderBoard();
       if (pendingDayKey && !yearMode) {
         const key = pendingDayKey;
@@ -2135,6 +2234,7 @@
       renderClientBars();
       renderAlerts();
       renderMap();
+      applyChrome();
     }
 
     document.addEventListener("click", () => {
@@ -2192,7 +2292,7 @@
       const on = !!cfg.on;
       $("bellBtn").classList.toggle("on", on);
       const arm = $("bellArm");
-      arm.textContent = on ? "ALERT OFF" : "ALERT ON";
+      arm.textContent = on ? t("alertOff") : t("alertOn");
       arm.classList.toggle("off", on);
     }
     function fillBellForm() {
@@ -2304,10 +2404,10 @@
     }
     function jobLines(cfg) {
       const jobs = tomorrowJobs(cfg);
-      if (!jobs.length) return ["No inspect tomorrow."];
+      if (!jobs.length) return [t("noInspect")];
       return jobs.map(j => {
         const p = pic(j.pic);
-        const type = TYPE_LABEL[j.type] || j.type;
+        const type = tType(j.type);
         return `${p ? p.name : j.pic} · ${j.factory || "-"} · ${j.customer || "-"} · ${type}`;
       });
     }
@@ -2334,8 +2434,8 @@
       const day = tomorrowIso();
       const [y, m, d] = day.split("-").map(Number);
       const title = jobs.length
-        ? `QA inspect ${SHORT[m - 1]} ${d} · ${jobs.length} job(s)`
-        : `QA Board · no inspect ${SHORT[m - 1]} ${d}`;
+        ? `QA inspect ${SHORT()[m - 1]} ${d} · ${jobs.length} job(s)`
+        : `QA Board · no inspect ${SHORT()[m - 1]} ${d}`;
       const desc = jobLines(cfg).concat(extra ? [extra] : []).join("\n");
       let alarms = "";
       for (let i = 0; i < n; i++) {
@@ -2375,16 +2475,17 @@
             const p = pic(j.pic);
             const sm = stampMeta(j.result);
             const dur = j.days === 1 ? "1d" : "½d";
-            const type = TYPE_LABEL[j.type] || j.type;
+            const type = tType(j.type);
             const tint = TINT[j.pic] || "#FFE4E6";
             const edge = p && p.color ? p.color : "#FB7185";
+            const lab = (j.result === "pass" ? t("pass") : j.result === "fail" ? t("fail") : t("pending"));
             return `<div class="job" style="background:${tint};border-left-color:${edge}">
               <b>${p ? p.name : j.pic} <span class="dur">(${dur})</span></b>
               <div class="row"><span class="ico">🏭</span> ${j.factory || "-"} <span class="ico">👤</span> ${j.customer || "-"}</div>
-              <div class="row"><span class="ico">📌</span> ${type} | <span class="stamp ${sm.cls}">${sm.label}</span></div>
+              <div class="row"><span class="ico">📌</span> ${type} | <span class="stamp ${sm.cls}">${lab}</span></div>
             </div>`;
           }).join("")
-        : `<div class="empty">No inspect tomorrow.</div>`;
+        : `<div class="empty">${t("noInspect")}</div>`;
       return rows + (extra ? `<div class="warn">${extra}</div>` : "");
     }
     function showInPageCard(cfg) {
@@ -2392,8 +2493,7 @@
       const day = tomorrowIso();
       const [y, m, d] = day.split("-").map(Number);
       const dt = parse(day);
-      const DOW = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-      const head = `${DOW[mon0(dt)]} ${d} ${SHORT[m - 1]}`;
+      const head = `${DOW()[mon0(dt)]} ${d} ${SHORT()[m - 1]}`;
       t.innerHTML = `<div class="ht"><b>${head}</b><button type="button" class="x" id="bellToastX" aria-label="Close">×</button></div>
         ${jobCardInner(cfg)}`;
       t.style.display = "block";
@@ -2437,13 +2537,13 @@
             const p = pic(j.pic);
             const sm = stampMeta(j.result);
             const dur = j.days === 1 ? "1d" : "½d";
-            const type = TYPE_LABEL[j.type] || j.type;
+            const type = tType(j.type);
             const tint = TINT[j.pic] || "#FFE4E6";
             const edge = p && p.color ? p.color : "#FB7185";
             return `<div style="background:${tint};border-left:5px solid ${edge};border-radius:14px;padding:10px 12px;margin:0 0 8px;font:14px/1.35 'IBM Plex Sans',sans-serif;box-shadow:0 12px 28px rgba(15,23,42,.18)">
               <b style="display:block;font-size:16px">${p ? p.name : j.pic} <span style="color:#64748B;font-weight:600">(${dur})</span></b>
               <div style="color:#475569;font-size:13px;margin-top:4px">🏭 ${j.factory || "-"} &nbsp;👤 ${j.customer || "-"}</div>
-              <div style="color:#475569;font-size:13px;margin-top:2px">📌 ${type} | ${sm.label}</div>
+              <div style="color:#475569;font-size:13px;margin-top:2px">📌 ${type} | ${j.result === "pass" ? t("pass") : j.result === "fail" ? t("fail") : t("pending")}</div>
             </div>`;
           }).join("")
         : `<div style="padding:12px;color:#64748B;background:#fff;border-radius:14px">No inspect tomorrow.</div>`;
@@ -2767,6 +2867,8 @@
     }
     try { resultOverlays = JSON.parse(localStorage.getItem("qa-board-results") || "{}"); } catch (e) { resultOverlays = {}; }
     bindFormPlus();
+    setLang(lang);
+    $("langBtn").onclick = () => { setLang(lang === "zh" ? "en" : "zh"); render(); };
     loadJobs().then(() => {
       render();
       consumeAlertHash();
