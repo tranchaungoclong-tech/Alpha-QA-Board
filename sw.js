@@ -1,4 +1,4 @@
-const CACHE = "qa-board-v67";
+const CACHE = "qa-board-v68";
 const PRECACHE = ["./", "./index.html", "./manifest.json", "./icon-180.png", "./icon-192.png"];
 let bellArm = null;
 
@@ -47,9 +47,12 @@ function isIos() {
 }
 
 function osToast(title, opts, clients) {
-  const focused = (clients || []).some(c => c.focused);
+  const list = clients || [];
+  const focused = list.some(c => c.focused);
   if (!isIos() && focused) return Promise.resolve();
-  return self.registration.showNotification(title, opts);
+  const next = Object.assign({}, opts);
+  if (!isIos() && list.length) next.silent = true;
+  return self.registration.showNotification(title, next);
 }
 
 function fireBell() {

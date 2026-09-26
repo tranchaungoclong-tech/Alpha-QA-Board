@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v67</title>
+  <title>Alpha QA — Inspection Board v68</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -566,7 +566,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v67 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v68 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -749,7 +749,7 @@
         </div>
       </div>
     </div>
-    <footer>v67. ALERT ON does not open a window. Other Chrome tab / closed Chrome: one OS banner. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v68. Weekend inspect is not Conflict. Other-tab banner is silent — 3-note chime from the board. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -1295,8 +1295,17 @@
       const dupPic = pics.some((p,i) => pics.indexOf(p) !== i);
       const weekend = list.some(j => { const w = mon0(parse(j.date)); return w >= 5 && j.type !== "leave"; });
       const overload = new Set(pics).size >= 3 || inspect.reduce((s,j)=>s+j.days,0) > 2;
-      const conflict = dupPic || weekend;
-      return { inspect, overload, conflict, warn: overload || conflict };
+      const conflict = dupPic;
+      return { inspect, overload, conflict, weekend, warn: overload || conflict || weekend };
+    }
+    function warnTag(meta) {
+      if (!meta || !meta.warn) return "";
+      if (meta.overload && meta.conflict) return "Overload / conflict";
+      if (meta.overload && meta.weekend) return "Overload / weekend";
+      if (meta.overload) return "Overload";
+      if (meta.weekend) return "Weekend inspect";
+      if (meta.conflict) return "Conflict";
+      return "";
     }
     function filteredFrom(all) {
       const byDate = {};
@@ -1436,7 +1445,7 @@
         if (meta.warn && list.length) {
           const t = document.createElement("div");
           t.className = "job conflict-tag";
-          t.textContent = meta.overload && meta.conflict ? "Overload / conflict" : meta.overload ? "Overload" : "Conflict";
+          t.textContent = warnTag(meta);
           t.onclick = () => { f.conflicts = true; render(); };
           cell.appendChild(t);
         }
@@ -1459,10 +1468,9 @@
       pendingDayKey = key;
       const d = parse(key);
       const DOW = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-      const tag = meta && meta.warn
-        ? (meta.overload && meta.conflict ? " · Overload / conflict" : meta.overload ? " · Overload" : " · Conflict")
-        : "";
-      $("dayPopTitle").textContent = `${DOW[mon0(d)]} ${d.getDate()} ${SHORT[d.getMonth()]}${tag}`;
+      const tag = warnTag(meta);
+      const tagBit = tag ? " · " + tag : "";
+      $("dayPopTitle").textContent = `${DOW[mon0(d)]} ${d.getDate()} ${SHORT[d.getMonth()]}${tagBit}`;
       const plus = $("dayPopPlus");
       if (plus) plus.href = formViewUrl(key);
       const body = $("dayPopBody");
@@ -1539,9 +1547,7 @@
           + (key === TODAY ? " today" : "")
           + (meta.warn ? " conflict" : "")
           + (hitDate === key ? " hit" : "");
-        const tag = meta.overload && meta.conflict ? "Overload / conflict"
-          : meta.overload ? "Overload"
-          : meta.conflict ? "Conflict" : "";
+        const tag = warnTag(meta);
         row.innerHTML = `<div class="agenda-head"><b>${d}</b><span>${DOW[mon0(dt)]}</span>${tag ? `<em>${tag}</em>` : ""}</div>`;
         if (!list.length) {
           const empty = document.createElement("div");
@@ -1794,7 +1800,8 @@
       Object.entries(by).forEach(([date, list]) => {
         const m = dayMeta(list);
         if (m.overload) items.push({ cls: "o", date, t: `${date} — overload (${[...new Set(m.inspect.map(j=>pic(j.pic).name))].join(", ")})` });
-        if (m.conflict && !m.overload) items.push({ cls: "c", date, t: `${date} — conflict (same PIC twice or weekend inspect)` });
+        if (m.weekend) items.push({ cls: "c", date, t: `${date} — Weekend inspect` });
+        else if (m.conflict) items.push({ cls: "c", date, t: `${date} — conflict (same PIC twice)` });
         list.filter(j => j.type === "leave").forEach(j => items.push({ cls: "l", date, t: `${date} — ${pic(j.pic).name} on annual leave` }));
       });
       const loadBase = yearMode ? YEAR_DAYS : WORKDAYS;
@@ -2167,7 +2174,10 @@
       const list = JOBS.filter(j => j.date === tomorrowIso());
       const m = dayMeta(list);
       if (!m.warn) return "";
-      return m.overload ? "Overload tomorrow." : "Conflict tomorrow.";
+      if (m.weekend) return "Weekend inspect tomorrow.";
+      if (m.overload) return "Overload tomorrow.";
+      if (m.conflict) return "Conflict tomorrow.";
+      return "";
     }
     let chimeLoop = null;
     let keepAlive = null;
@@ -2345,6 +2355,7 @@
           body: lines.slice(0, 4).join("\n"),
           icon: "./icon-192.png",
           tag: "qa-bell",
+          silent: true,
           renotify: false,
           requireInteraction: true
         });
