@@ -1,6 +1,6 @@
 {
-  "name": "Alpha QA Inspection Board",
-  "short_name": "QA Board",
+  "name": "Inspection schedule",
+  "short_name": "Inspection schedule",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

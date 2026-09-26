@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#C33D27" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v70</title>
+  <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
+  <title>Alpha QA — Inspection Board v71</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -160,22 +160,33 @@
     .under-cal {
       grid-area: under;
       display: grid;
-      grid-template-columns: 400px 400px 400px;
+      grid-template-columns: 400px 400px minmax(0, 1fr);
       gap: 12px;
-      width: max-content;
+      width: 100%;
       max-width: 100%;
       min-width: 0;
       align-self: start;
-      justify-self: start;
+      justify-self: stretch;
     }
-    .under-cal > .card { min-width: 0; width: 400px; }
+    .under-cal > .card { min-width: 0; width: auto; }
+    .under-cal > .card.loc-card,
+    .under-cal > .card.cat-card { width: 400px; }
+    .under-cal > .card.factory-up {
+      width: auto;
+      min-width: 0;
+    }
     .donuts {
       grid-area: charts;
       display: grid;
-      grid-template-columns: 1fr 1fr 3fr;
+      grid-template-columns: minmax(140px, 0.7fr) 1fr 3fr;
       gap: 10px;
       align-items: stretch;
       margin-top: -2px;
+    }
+    .donuts .card.pf-slim svg.donut {
+      width: 120px;
+      max-width: 120px;
+      height: 120px;
     }
     .day-pop {
       display: none; position: fixed; inset: 0; z-index: 200;
@@ -474,9 +485,10 @@
     }
     @media (max-width: 1180px) {
       .grid { grid-template-columns: 1fr; grid-template-areas: "cal" "under" "side" "charts"; }
-      .under-cal { width: 100%; max-width: 400px; grid-template-columns: 1fr; }
+      .under-cal { width: 100%; max-width: none; grid-template-columns: 1fr 1fr; }
       .under-cal > .card { width: 100%; }
-      .donuts { grid-template-columns: 1fr 1fr; }
+      .under-cal > .card.factory-up { grid-column: 1 / -1; }
+      .donuts { grid-template-columns: minmax(120px, 0.8fr) 1fr; }
       .visit-family { grid-column: 1 / -1; }
       .day { min-height: 120px; }
     }
@@ -528,8 +540,9 @@
         background-position: right 5px center;
       }
       .job .ico { display: none; }
-      .under-cal { width: 100%; max-width: 400px; grid-template-columns: 1fr; }
+      .under-cal { width: 100%; max-width: none; grid-template-columns: 1fr; }
       .under-cal > .card { width: 100%; }
+      .under-cal > .card.factory-up { grid-column: auto; }
       .donuts { grid-template-columns: 1fr; }
       .donuts svg.donut,
       .under-cal svg.donut,
@@ -566,7 +579,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v70 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v71 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -689,32 +702,32 @@
       </aside>
 
       <div class="under-cal">
-        <section class="card">
+        <section class="card loc-card">
           <h2>Location · inspect days</h2>
           <p class="map-note">Bubble size = visit days (not cost). Click a country to filter. Sheet droplist: IN / CN / VN / TH / KH / MY / ID.</p>
           <svg class="map-svg" id="seaMap" viewBox="0 0 420 360"></svg>
           <div class="map-leg" id="mapLegend"></div>
         </section>
-        <section class="card">
+        <section class="card cat-card">
           <h2>Category · Inline / Final</h2>
           <div class="cat-key"><span><i style="background:#38BDF8"></i>Inline</span><span><i style="background:#FB7185"></i>Final</span></div>
           <div id="catBars"></div>
         </section>
-        <section class="card">
-          <h2>Pass / Fail</h2>
+        <section class="card factory-up">
+          <h2>Factory</h2>
           <div class="donut-wrap">
-            <svg class="donut" id="resultDonut" viewBox="0 0 280 280"></svg>
-            <div class="leg" id="resultLegend"></div>
+            <svg class="donut" id="factoryDonut" viewBox="0 0 280 280"></svg>
+            <div class="leg" id="factoryLegend"></div>
           </div>
         </section>
       </div>
 
       <div class="donuts">
-        <section class="card wide">
-          <h2>Factory</h2>
+        <section class="card pf-slim">
+          <h2>Pass / Fail</h2>
           <div class="donut-wrap">
-            <svg class="donut" id="factoryDonut" viewBox="0 0 280 280"></svg>
-            <div class="leg" id="factoryLegend"></div>
+            <svg class="donut" id="resultDonut" viewBox="0 0 280 280"></svg>
+            <div class="leg" id="resultLegend"></div>
           </div>
         </section>
         <section class="card">
@@ -749,7 +762,7 @@
         </div>
       </div>
     </div>
-    <footer>v70. Changing the time sends a new ping. Chrome other-tab + iPhone lock: one OS banner. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v71. Company a on the tab / Home Screen. Factory sits next to Location. Pass / Fail is the small chart. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">

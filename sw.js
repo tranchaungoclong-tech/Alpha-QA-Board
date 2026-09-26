@@ -1,4 +1,4 @@
-const CACHE = "qa-board-v70";
+const CACHE = "qa-board-v71";
 const PRECACHE = ["./", "./index.html", "./manifest.json", "./icon-180.png", "./icon-192.png"];
 let bellArm = null;
 
@@ -65,7 +65,7 @@ function fireBell() {
   };
   return self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
     list.forEach(c => c.postMessage({ type: "qa-bell-fire" }));
-    return osToast("QA Board · tomorrow", opts, list);
+    return osToast("Inspection schedule · tomorrow", opts, list);
   });
 }
 
