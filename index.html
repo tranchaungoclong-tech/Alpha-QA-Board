@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v73</title>
+  <title>Alpha QA — Inspection Board v74</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -330,6 +330,11 @@
     .cat-seg { height: 100%; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; font-size: 11px; font-weight: 800; color: #fff; min-width: 0; }
     .cat-seg.inline { background: #38BDF8; }
     .cat-seg.final { background: #FB7185; }
+    .cat-seg.other { background: #94A3B8; }
+    .fac-tot {
+      margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line);
+      font-size: 13px; font-weight: 800; text-align: right;
+    }
     .cat-tot { font-size: 13px; font-weight: 800; text-align: right; }
     .cat-key { display: flex; gap: 14px; justify-content: flex-end; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
     .cat-key i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
@@ -702,10 +707,13 @@
         </section>
         <section class="card factory-up">
           <h2>Factory</h2>
-          <div class="donut-wrap">
-            <svg class="donut" id="factoryDonut" viewBox="0 0 280 280"></svg>
-            <div class="leg" id="factoryLegend"></div>
+          <div class="cat-key">
+            <span><i style="background:#38BDF8"></i>Inline</span>
+            <span><i style="background:#FB7185"></i>Final</span>
+            <span><i style="background:#94A3B8"></i>Other</span>
           </div>
+          <div id="factoryBars"></div>
+          <div class="fac-tot" id="factoryTot"></div>
         </section>
       </div>
 
@@ -749,7 +757,7 @@
         </div>
       </div>
     </div>
-    <footer>v73. Location / Category / Factory share the row. Pass / Fail pie matches Client. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v74. Factory is rank bars + total days. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -1755,12 +1763,6 @@
 
     function renderDonut() {
       const jobs = filteredScope().filter(j => j.type !== "leave");
-      const factories = [...new Set(jobs.map(j => j.factory).filter(Boolean))];
-      paintDonut("factoryDonut", "factoryLegend",
-        groupJobs(jobs, "factory"),
-        name => FACTORY_COLOR[factories.indexOf(name) % FACTORY_COLOR.length],
-        name => setFilter("factory", name),
-        undefined, false, true);
       paintDonut("donut", "legend",
         groupJobs(jobs, "customer"),
         (name, i) => CLIENT_COLOR[name] || PIE_COLOR[i % PIE_COLOR.length],
@@ -1822,6 +1824,38 @@
         });
       });
       updateBellDot(items.length);
+    }
+
+    function renderFactoryBars() {
+      const jobs = filteredScope().filter(j => j.type !== "leave");
+      const { entries, total } = groupJobs(jobs, "factory");
+      const rows = entries.map(([name, v]) => {
+        const other = Math.max(0, Math.round((v.days - v.inline - v.final) * 10) / 10);
+        return { name, inline: v.inline, final: v.final, other, tot: v.days };
+      });
+      const max = Math.max(1, ...rows.map(r => r.tot));
+      const seg = (cls, days) => {
+        if (!days) return "";
+        const w = days / max * 100;
+        const lab = w >= 10 ? fmt(days) + "d" : "";
+        return `<div class="cat-seg ${cls}" style="width:${w}%">${lab}</div>`;
+      };
+      const host = $("factoryBars");
+      const totEl = $("factoryTot");
+      if (!host) return;
+      host.innerHTML = rows.length
+        ? rows.map(r => `<div class="cat-row" data-factory="${r.name}">
+            <div class="lab">${r.name}</div>
+            <div class="cat-track">
+              ${seg("inline", r.inline)}${seg("final", r.final)}${seg("other", r.other)}
+            </div>
+            <div class="cat-tot">${fmt(r.tot)}d</div>
+          </div>`).join("")
+        : `<div style="color:var(--muted);font-size:12px">No factory days in filter</div>`;
+      if (totEl) totEl.textContent = rows.length ? "Total " + fmt(total) + "d" : "";
+      host.querySelectorAll("[data-factory]").forEach(el => {
+        el.onclick = () => setFilter("factory", el.dataset.factory);
+      });
     }
 
     function renderCatBars() {
@@ -2065,6 +2099,7 @@
       renderDonut();
       renderPfRings();
       renderCatBars();
+      renderFactoryBars();
       renderAlerts();
       renderMap();
     }
