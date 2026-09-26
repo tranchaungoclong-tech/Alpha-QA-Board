@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v74</title>
+  <title>Alpha QA — Inspection Board v75</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -326,6 +326,9 @@
     .side-donuts .leg { font-size: 12px; gap: 6px 8px; font-weight: 600; }
     .cat-row { display: grid; grid-template-columns: 92px 1fr 44px; gap: 8px; align-items: center; margin-bottom: 10px; cursor: pointer; }
     .cat-row .lab { font-size: 12px; font-weight: 700; color: var(--ink); text-align: right; line-height: 1.2; }
+    .fac-row { grid-template-columns: minmax(0, 108px) 1fr 44px; }
+    .fac-row .lab { display: flex; align-items: center; justify-content: flex-end; gap: 6px; text-align: left; }
+    .fac-row .lab .dot { width: 10px; height: 10px; border-radius: 2px; flex: 0 0 auto; }
     .cat-track { height: 22px; background: #F1F5F9; border-radius: 6px; overflow: hidden; display: flex; }
     .cat-seg { height: 100%; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; font-size: 11px; font-weight: 800; color: #fff; min-width: 0; }
     .cat-seg.inline { background: #38BDF8; }
@@ -757,7 +760,7 @@
         </div>
       </div>
     </div>
-    <footer>v74. Factory is rank bars + total days. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v75. Colour square before each factory name. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -1828,10 +1831,12 @@
 
     function renderFactoryBars() {
       const jobs = filteredScope().filter(j => j.type !== "leave");
+      const factories = [...new Set(jobs.map(j => j.factory).filter(Boolean))];
       const { entries, total } = groupJobs(jobs, "factory");
       const rows = entries.map(([name, v]) => {
         const other = Math.max(0, Math.round((v.days - v.inline - v.final) * 10) / 10);
-        return { name, inline: v.inline, final: v.final, other, tot: v.days };
+        const color = FACTORY_COLOR[Math.max(0, factories.indexOf(name)) % FACTORY_COLOR.length];
+        return { name, inline: v.inline, final: v.final, other, tot: v.days, color };
       });
       const max = Math.max(1, ...rows.map(r => r.tot));
       const seg = (cls, days) => {
@@ -1844,8 +1849,8 @@
       const totEl = $("factoryTot");
       if (!host) return;
       host.innerHTML = rows.length
-        ? rows.map(r => `<div class="cat-row" data-factory="${r.name}">
-            <div class="lab">${r.name}</div>
+        ? rows.map(r => `<div class="cat-row fac-row" data-factory="${r.name}">
+            <div class="lab"><i class="dot" style="background:${r.color}"></i>${r.name}</div>
             <div class="cat-track">
               ${seg("inline", r.inline)}${seg("final", r.final)}${seg("other", r.other)}
             </div>
