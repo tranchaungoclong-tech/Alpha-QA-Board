@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v90</title>
+  <title>Alpha QA — Inspection Board v91</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -208,14 +208,15 @@
       display: flex; flex-direction: column;
     }
     .donuts .card h2 { font-size: 14px; margin-bottom: 8px; padding-bottom: 6px; flex: 0 0 auto; }
-    .donuts svg.donut { width: 180px; max-width: 180px; height: 180px; flex: 0 0 auto; }
+    .donuts svg.donut { width: 200px; max-width: 200px; height: 200px; flex: 0 0 auto; }
+    .donuts .card:nth-child(2) svg.donut { width: 220px; max-width: 220px; height: 220px; }
     .donuts .donut-wrap {
       flex: 1 1 auto; min-height: 0;
       display: flex; flex-direction: column; align-items: center; gap: 8px;
     }
     .donuts .leg {
-      font-size: 12px; gap: 4px 8px; font-weight: 600;
-      max-height: 88px; overflow: auto; width: 100%;
+      font-size: 13px; gap: 8px 16px; font-weight: 600;
+      max-height: none; overflow: visible; width: 100%;
       justify-content: center;
     }
     .under-cal svg.donut { width: 180px; max-width: 180px; height: 180px; }
@@ -777,7 +778,7 @@
         </div>
       </div>
     </div>
-    <footer>v90. Client ring: days on every slice. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v91. Client ring matches sample: no numbers on slices, days in the legend. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -1790,7 +1791,7 @@
       const { entries, total } = data;
       const cx = 140, cy = 140;
       const R = compact ? 122 : 118;
-      const r = fiLegend ? 52 : (compact ? 34 : 32);
+      const r = fiLegend ? 62 : (compact ? 34 : 32);
       const pctSize = compact ? 20 : 22;
       const daySize = compact ? 13 : 14;
       const centerSize = fiLegend ? 36 : (compact ? 18 : 20);
@@ -1809,12 +1810,10 @@
           const [lx, ly] = polar(cx, cy, (R + r) / 2, mid);
           const pct = Math.round(frac * 100);
           paths += `<path d="${arc(cx,cy,R,a0,a1)} L ${polar(cx,cy,r,a1).join(" ")} ${arc(cx,cy,r,a1,a0).replace("M","L")} Z" fill="${col}" data-k="${name}" style="cursor:pointer"/>`;
-          const dayLab = fmt(v.days) + (unit === "jobs" ? "" : "d");
-          if (unit === "jobs" && pct >= 7) {
+          if (!fiLegend && unit === "jobs" && pct >= 7) {
+            const dayLab = fmt(v.days);
             paths += `<text x="${lx}" y="${ly-3}" text-anchor="middle" font-size="${pctSize}" font-weight="800" fill="#fff">${pct}%</text>
               <text x="${lx}" y="${ly+14}" text-anchor="middle" font-size="${daySize}" font-weight="700" fill="rgba(255,255,255,.95)">${dayLab}</text>`;
-          } else if (unit !== "jobs" && frac >= 0.05) {
-            paths += `<text x="${lx}" y="${ly+4}" text-anchor="middle" font-size="${frac >= 0.12 ? 16 : 12}" font-weight="800" fill="#fff">${dayLab}</text>`;
           }
         });
       }
