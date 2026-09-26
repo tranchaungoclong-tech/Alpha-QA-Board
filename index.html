@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v83</title>
+  <title>Alpha QA — Inspection Board v84</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -765,7 +765,7 @@
         </div>
       </div>
     </div>
-    <footer>v83. Client is rank bars with days in the colour. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v84. Map redraw: countries apart, days on the land (no covering dots). Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -800,13 +800,27 @@
     const SOURCING_COLOR = ["#FBBF24","#FB7185","#2DD4BF","#818CF8"];
     const AUDIT_COLOR = ["#A78BFA","#22D3EE","#4ADE80","#F472B6"];
     const COUNTRY = {
-      IN: { name: "India", x: 98, y: 155, color: "#F59E0B" },
-      CN: { name: "China", x: 300, y: 92, color: "#F43F5E" },
-      VN: { name: "Vietnam", x: 292, y: 198, color: "#2563EB" },
-      TH: { name: "Thailand", x: 200, y: 175, color: "#16A34A" },
-      KH: { name: "Cambodia", x: 236, y: 198, color: "#EA580C" },
-      MY: { name: "Malaysia", x: 218, y: 258, color: "#7C3AED" },
-      ID: { name: "Indonesia", x: 270, y: 300, color: "#0F766E" }
+      IN: { name: "India", color: "#F59E0B", fill: "#FEF3C7", stroke: "#D97706",
+        d: "M70 70 L110 45 L145 80 L150 140 L125 210 L95 245 L70 200 L55 140 L58 95 Z",
+        lx: 100, ly: 140 },
+      CN: { name: "China", color: "#F43F5E", fill: "#FECACA", stroke: "#E11D48",
+        d: "M210 28 L280 18 L340 22 L385 40 L400 58 L395 85 L370 95 L355 115 L310 118 L250 110 L225 85 L215 50 Z",
+        lx: 305, ly: 72 },
+      TH: { name: "Thailand", color: "#16A34A", fill: "#BBF7D0", stroke: "#16A34A",
+        d: "M175 128 L210 122 L218 155 L210 195 L198 230 L182 235 L172 195 L168 155 Z",
+        lx: 192, ly: 168 },
+      KH: { name: "Cambodia", color: "#EA580C", fill: "#FED7AA", stroke: "#EA580C",
+        d: "M222 168 L258 164 L262 188 L240 198 L220 186 Z",
+        lx: 240, ly: 182 },
+      VN: { name: "Vietnam", color: "#2563EB", fill: "#93C5FD", stroke: "#2563EB",
+        d: "M270 125 L298 122 L308 155 L300 195 L292 230 L305 255 L282 258 L272 220 L274 165 Z",
+        lx: 288, ly: 175 },
+      MY: { name: "Malaysia", color: "#7C3AED", fill: "#DDD6FE", stroke: "#7C3AED",
+        d: "M178 242 L238 238 L242 265 L185 270 L172 255 Z",
+        lx: 208, ly: 256 },
+      ID: { name: "Indonesia", color: "#0F766E", fill: "#99F6E4", stroke: "#0F766E",
+        d: "M155 282 L250 274 L350 278 L390 290 L375 312 L250 318 L160 305 Z",
+        lx: 270, ly: 298 }
     };
     const MONTH_THEME = [
       { month: "#0EA5E9", ink: "#0369A1", tint: "#E0F2FE" },
@@ -1934,34 +1948,17 @@
       const bag = {};
       jobs.forEach(j => { bag[j.country] = (bag[j.country] || 0) + j.days; });
       const max = Math.max(1, ...Object.values(bag), 1);
-      const land = `
-        <rect x="0" y="0" width="420" height="360" fill="#E8F4FC"/>
-        <path d="M62 78 L92 52 L128 68 L148 108 L142 168 L118 228 L96 248 L78 210 L52 168 L48 118 Z" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
-        <path d="M198 36 L268 24 L328 30 L362 48 L388 62 L382 88 L352 96 L358 122 L348 148 L318 162 L278 158 L248 142 L228 112 L218 72 Z" fill="#FECACA" stroke="#E11D48" stroke-width="1.5"/>
-        <path d="M182 128 L214 122 L222 158 L214 198 L202 238 L188 246 L180 210 L174 168 Z" fill="#BBF7D0" stroke="#16A34A" stroke-width="1.5"/>
-        <path d="M218 176 L248 172 L252 198 L228 206 L214 192 Z" fill="#FED7AA" stroke="#EA580C" stroke-width="1.5"/>
-        <path d="M268 142 L292 138 L300 176 L292 218 L298 250 L276 254 L268 214 L270 176 Z" fill="#93C5FD" stroke="#2563EB" stroke-width="1.5"/>
-        <path d="M196 246 L236 242 L240 268 L200 274 L190 258 Z" fill="#DDD6FE" stroke="#7C3AED" stroke-width="1.5"/>
-        <path d="M168 286 L248 278 L338 282 L378 292 L368 310 L248 318 L172 308 Z" fill="#99F6E4" stroke="#0F766E" stroke-width="1.5"/>
-        <text x="98" y="148" text-anchor="middle" font-size="13" font-weight="800" fill="#B45309">IN</text>
-        <text x="300" y="86" text-anchor="middle" font-size="13" font-weight="800" fill="#9F1239">CN</text>
-        <text x="200" y="168" text-anchor="middle" font-size="12" font-weight="800" fill="#166534">TH</text>
-        <text x="284" y="168" text-anchor="middle" font-size="12" font-weight="800" fill="#1E40AF">VN</text>
-        <text x="232" y="188" text-anchor="middle" font-size="10" font-weight="800" fill="#9A3412">KH</text>
-        <text x="216" y="258" text-anchor="middle" font-size="11" font-weight="800" fill="#5B21B6">MY</text>
-        <text x="270" y="302" text-anchor="middle" font-size="12" font-weight="800" fill="#115E59">ID</text>`;
-      const bubbles = Object.keys(COUNTRY).map(code => {
-        const c = COUNTRY[code];
-        const days = bag[code] || 0;
-        const r = days ? 7 + (days / max) * 7 : 5;
-        const on = f.country === code;
-        const fill = days ? c.color : "#94A3B8";
-        return `<g data-cty="${code}" style="cursor:pointer">
-          <circle cx="${c.x}" cy="${c.y}" r="${r}" fill="${fill}" fill-opacity="${days ? (on ? .95 : .88) : .28}" stroke="${on ? "#0F172A" : "#fff"}" stroke-width="${on ? 3 : 2}"/>
-          ${days ? `<text x="${c.x}" y="${c.y + 3}" text-anchor="middle" font-size="9" font-weight="800" fill="#fff">${fmt(days)}d</text>` : ""}
-        </g>`;
-      }).join("");
-      $("seaMap").innerHTML = land + bubbles;
+      const land = `<rect x="0" y="0" width="420" height="360" fill="#E8F4FC"/>` +
+        Object.entries(COUNTRY).map(([code, c]) => {
+          const days = bag[code] || 0;
+          const on = f.country === code;
+          return `<g data-cty="${code}" style="cursor:pointer">
+            <path d="${c.d}" fill="${c.fill}" stroke="${on ? "#0F172A" : c.stroke}" stroke-width="${on ? 2.6 : 1.5}"/>
+            <text x="${c.lx}" y="${c.ly}" text-anchor="middle" font-size="12" font-weight="800" fill="#0F172A">${code}</text>
+            ${days ? `<text x="${c.lx}" y="${c.ly + 14}" text-anchor="middle" font-size="11" font-weight="800" fill="${c.color}">${fmt(days)}d</text>` : ""}
+          </g>`;
+        }).join("");
+      $("seaMap").innerHTML = land;
       $("seaMap").querySelectorAll("[data-cty]").forEach(el => {
         el.onclick = () => setFilter("country", el.dataset.cty);
       });
