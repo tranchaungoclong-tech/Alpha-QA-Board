@@ -282,7 +282,8 @@ async function cronTick(env, forcePic) {
     const slotList = slotsOf(arm);
     if (!forcePic && !inSlot(arm, local.mins)) continue;
     if (!forcePic && skippedNow(arm, local)) continue;
-    const slotIdx = forcePic ? "test" : String(slotList.findIndex(slot => local.mins >= slot && local.mins <= slot + 2));
+    const hit = slotList.find(slot => local.mins >= slot && local.mins <= slot + 2);
+    const slotIdx = forcePic ? "test" : String(hit != null ? hit : local.mins);
     const sentKey = `sent:${local.date}:${key}:${slotIdx}`;
     if (!forcePic) {
       const already = await env.SUBS.get(sentKey);
@@ -342,6 +343,8 @@ export default {
           tz: String(body.tz || ""),
           at: new Date().toISOString()
         };
+        if (rec.tzOffset == null) rec.tzOffset = -420;
+        if (!rec.tz) rec.tz = "Asia/Ho_Chi_Minh";
         const key = "sub:" + id;
         await env.SUBS.put(key, JSON.stringify(rec));
         if (body.shareArm && body.arm) {

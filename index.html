@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v69</title>
+  <title>Alpha QA — Inspection Board v70</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -566,7 +566,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v69 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v70 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -749,7 +749,7 @@
         </div>
       </div>
     </div>
-    <footer>v69. ALERT ON on iPhone or PC arms both. Chrome other-tab: one OS banner. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v70. Changing the time sends a new ping. Chrome other-tab + iPhone lock: one OS banner. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -2576,19 +2576,9 @@
       return true;
     }
     function skipOpenSlots(cfg) {
-      const now = localClock();
-      const fired = loadFired();
-      const skipped = [];
-      bellSlots(cfg).forEach(slot => {
-        if (now.mins >= slot && now.mins <= slot + 2) {
-          if (fired.slots.indexOf(slot) < 0) fired.slots.push(slot);
-          skipped.push(slot);
-        }
-      });
-      saveFired(fired);
-      cfg.skipSlots = skipped;
-      cfg.skipDate = now.date;
-      return skipped;
+      cfg.skipSlots = [];
+      cfg.skipDate = "";
+      return [];
     }
     function tickBell() {
       const cfg = loadBell();
