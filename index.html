@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="QA Board" />
-  <title>Alpha QA — Inspection Board v68</title>
+  <title>Alpha QA — Inspection Board v69</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -566,7 +566,7 @@
     <header>
       <div>
         <h1>Full Month Calendar — <span class="month-name" id="monthName">September</span> <span class="year-name" id="yearName">2026</span></h1>
-        <div class="sub">v68 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
+        <div class="sub">v69 · Standard: <b>20 working days / month</b> · data: <b id="dataSrc">demo</b> · click <b>Year</b> for yearly summary · stamp stays on ↻ until Sheet has it</div>
       </div>
       <div class="head-right">
         <div class="pf-kpis">
@@ -749,7 +749,7 @@
         </div>
       </div>
     </div>
-    <footer>v68. Weekend inspect is not Conflict. Other-tab banner is silent — 3-note chime from the board. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v69. ALERT ON on iPhone or PC arms both. Chrome other-tab: one OS banner. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -2355,7 +2355,6 @@
           body: lines.slice(0, 4).join("\n"),
           icon: "./icon-192.png",
           tag: "qa-bell",
-          silent: true,
           renotify: false,
           requireInteraction: true
         });
@@ -2433,6 +2432,7 @@
       saveBell(cfg);
       paintArm();
       armBackground(cfg);
+      shareArm(cfg);
     }
     function urlB64ToUint8(b64) {
       const pad = "=".repeat((4 - b64.length % 4) % 4);
@@ -2453,7 +2453,44 @@
         body: JSON.stringify(body)
       }).then(r => r.json().catch(() => null)).catch(() => null);
     }
-    function subscribeLockScreen(cfg) {
+    function shareArm(cfg) {
+      return postPush("/arm", {
+        on: !!cfg.on,
+        time: cfg.time,
+        times: cfg.times,
+        who: cfg.who,
+        conflict: cfg.conflict,
+        lines: jobLines(cfg),
+        skipSlots: cfg.skipSlots || [],
+        skipDate: cfg.skipDate || "",
+        tzOffset: new Date().getTimezoneOffset(),
+        tz: (Intl.DateTimeFormat().resolvedOptions().timeZone) || ""
+      });
+    }
+    function applySharedArm(shared) {
+      if (!shared || shared.missing || typeof shared.on !== "boolean") return loadBell();
+      const prev = loadBell();
+      const cfg = Object.assign(prev, {
+        on: !!shared.on,
+        time: shared.time || prev.time || "20:10",
+        times: Number(shared.times) || prev.times || 1,
+        who: shared.who || prev.who || "all",
+        conflict: shared.conflict !== false
+      });
+      saveBell(cfg);
+      fillBellForm();
+      paintArm();
+      return cfg;
+    }
+    function pullSharedArm() {
+      const base = pushBase();
+      if (!base) return Promise.resolve(null);
+      return fetch(base + "/arm", { cache: "no-store" })
+        .then(r => r.ok ? r.json() : null)
+        .then(shared => shared ? applySharedArm(shared) : null)
+        .catch(() => null);
+    }
+    function subscribeLockScreen(cfg, share) {
       const base = pushBase();
       const vapid = String(window.VAPID_PUBLIC_KEY || "");
       if (!base || !vapid) return Promise.resolve();
@@ -2474,6 +2511,7 @@
           subscription: sub.toJSON(),
           tzOffset: new Date().getTimezoneOffset(),
           tz: (Intl.DateTimeFormat().resolvedOptions().timeZone) || "",
+          shareArm: !!share,
           arm: {
             on: !!cfg.on,
             time: cfg.time,
@@ -2510,7 +2548,7 @@
           reg.periodicSync.register("qa-bell", { minInterval: 15 * 60 * 1000 }).catch(() => {});
         }
       }).catch(() => {});
-      subscribeLockScreen(cfg);
+      subscribeLockScreen(cfg, false);
     }
     function bellSlots(cfg) {
       const parts = (cfg.time || "20:10").split(":");
@@ -2573,6 +2611,7 @@
         const cfg = readBellForm();
         saveBell(cfg);
         paintArm();
+        if (cfg.on) shareArm(cfg);
       };
     });
     $("bellArm").onclick = ev => {
@@ -2594,6 +2633,7 @@
           Notification.requestPermission().catch(() => {});
         }
         armBackground(cfg);
+        shareArm(cfg);
       } else {
         turnAlertOff();
       }
@@ -2618,7 +2658,10 @@
     $("refreshBtn").onclick = () => { refreshLive(); };
     window.addEventListener("online", () => { refreshLive(); });
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") refreshLive();
+      if (document.visibilityState === "visible") {
+        refreshLive();
+        pullSharedArm().then(cfg => { if (cfg && cfg.on) armBackground(cfg); });
+      }
     });
     window.addEventListener("pageshow", ev => {
       if (ev.persisted) refreshLive();
@@ -2628,8 +2671,10 @@
     if (navigator.serviceWorker) {
       navigator.serviceWorker.register("./sw.js").then(reg => {
         if (reg.update) reg.update().catch(() => {});
-        const cfg = loadBell();
-        if (cfg.on) armBackground(cfg);
+        pullSharedArm().then(shared => {
+          const cfg = shared || loadBell();
+          if (cfg.on) armBackground(cfg);
+        });
       }).catch(() => {});
       navigator.serviceWorker.addEventListener("controllerchange", () => {
         if (window.__qaReloaded) return;
@@ -2639,8 +2684,9 @@
       navigator.serviceWorker.addEventListener("message", ev => {
         const msg = ev.data || {};
         if (msg.type === "qa-bell-fire") {
-          const cfg = loadBell();
-          if (!cfg.on) return;
+          const cfg = Object.assign(loadBell(), { on: true });
+          saveBell(cfg);
+          paintArm();
           const now = localClock();
           const slot = bellSlots(cfg).find(s => now.mins >= s && now.mins <= s + 2);
           if (!claimMins(slot != null ? slot : now.mins)) return;

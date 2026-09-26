@@ -183,8 +183,61 @@ async function listSubs(env) {
   return out;
 }
 
-async function fireFor(env, rec, key, jobs, force) {
-  const arm = rec.arm || {};
+function skippedNow(arm, local) {
+  if (!arm || arm.skipDate !== local.date) return false;
+  const skip = Array.isArray(arm.skipSlots) ? arm.skipSlots : [];
+  if (!skip.length) return false;
+  const slotList = slotsOf(arm);
+  return slotList.some((slot, i) => {
+    if (!(local.mins >= slot && local.mins <= slot + 2)) return false;
+    return skip.indexOf(i) >= 0 || skip.indexOf(slot) >= 0;
+  });
+}
+
+async function readShared(env) {
+  if (!env.SUBS) return null;
+  return env.SUBS.get("arm:shared", "json");
+}
+
+async function writeShared(env, arm) {
+  const rec = {
+    on: !!arm.on,
+    time: arm.time || "20:10",
+    times: Number(arm.times) || 1,
+    who: String(arm.who || "all"),
+    conflict: arm.conflict !== false,
+    lines: Array.isArray(arm.lines) ? arm.lines.slice(0, 8) : [],
+    skipSlots: Array.isArray(arm.skipSlots) ? arm.skipSlots.map(Number).filter(n => n >= 0) : [],
+    skipDate: String(arm.skipDate || ""),
+    at: new Date().toISOString()
+  };
+  await env.SUBS.put("arm:shared", JSON.stringify(rec));
+  return rec;
+}
+
+async function markSkipAll(env, arm, recHint) {
+  const skip = Array.isArray(arm.skipSlots) ? arm.skipSlots.map(Number).filter(n => n >= 0) : [];
+  if (!arm.on || !skip.length) return;
+  const local = deviceNow(recHint || {});
+  const slotList = slotsOf(arm);
+  const subs = await listSubs(env);
+  for (const { key } of subs) {
+    for (const mins of skip) {
+      const idx = slotList.findIndex(slot => mins === slot || (mins >= slot && mins <= slot + 2));
+      const mark = idx >= 0 ? String(idx) : String(mins);
+      await env.SUBS.put(`sent:${local.date}:${key}:${mark}`, "1", { expirationTtl: 48 * 3600 });
+    }
+  }
+}
+
+function mergeArm(rec, shared) {
+  const local = rec && rec.arm ? rec.arm : {};
+  if (shared && shared.at) return Object.assign({}, local, shared);
+  return local;
+}
+
+async function fireFor(env, rec, key, jobs, force, armIn) {
+  const arm = armIn || rec.arm || {};
   const now = deviceNow(rec);
   const tomorrow = addDays(now.date, 1);
   const who = arm.who && arm.who !== "all" ? arm.who : rec.pic;
@@ -219,21 +272,23 @@ async function cronTick(env, forcePic) {
   let jobs = [];
   try { jobs = await loadJobs(env); } catch (err) { jobs = []; }
   const subs = await listSubs(env);
+  const shared = await readShared(env);
   const result = [];
   for (const { key, rec } of subs) {
-    const arm = rec.arm || {};
+    const arm = mergeArm(rec, shared);
     const local = deviceNow(rec);
     if (!forcePic && !arm.on) continue;
     if (forcePic && forcePic !== "*" && rec.pic !== forcePic && arm.who !== forcePic && arm.who !== "all") continue;
     const slotList = slotsOf(arm);
     if (!forcePic && !inSlot(arm, local.mins)) continue;
+    if (!forcePic && skippedNow(arm, local)) continue;
     const slotIdx = forcePic ? "test" : String(slotList.findIndex(slot => local.mins >= slot && local.mins <= slot + 2));
     const sentKey = `sent:${local.date}:${key}:${slotIdx}`;
     if (!forcePic) {
       const already = await env.SUBS.get(sentKey);
       if (already) continue;
     }
-    const out = await fireFor(env, rec, key, jobs, !!forcePic);
+    const out = await fireFor(env, rec, key, jobs, !!forcePic, arm);
     if (out.ok && !forcePic) await env.SUBS.put(sentKey, "1", { expirationTtl: 48 * 3600 });
     result.push({ pic: rec.pic, ...out });
   }
@@ -247,7 +302,28 @@ export default {
     try {
       if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
         const n = env.SUBS ? (await env.SUBS.list({ prefix: "sub:", limit: 100 })).keys.length : 0;
-        return json({ ok: true, subs: n, vn: vnNow(), utc: new Date().toISOString(), publicKey: env.VAPID_PUBLIC_KEY || "" });
+        const shared = await readShared(env);
+        return json({ ok: true, subs: n, vn: vnNow(), utc: new Date().toISOString(), publicKey: env.VAPID_PUBLIC_KEY || "", arm: shared ? { on: !!shared.on, time: shared.time, times: shared.times } : null });
+      }
+      if (req.method === "GET" && url.pathname === "/arm") {
+        const shared = await readShared(env);
+        return json(shared || { missing: true });
+      }
+      if (req.method === "POST" && url.pathname === "/arm") {
+        const body = await req.json();
+        const arm = {
+          on: !!body.on,
+          time: body.time || "20:10",
+          times: Number(body.times) || 1,
+          who: String(body.who || "all"),
+          conflict: body.conflict !== false,
+          lines: Array.isArray(body.lines) ? body.lines : [],
+          skipSlots: Array.isArray(body.skipSlots) ? body.skipSlots : [],
+          skipDate: String(body.skipDate || "")
+        };
+        const saved = await writeShared(env, arm);
+        await markSkipAll(env, saved, { tzOffset: body.tzOffset, tz: body.tz });
+        return json({ ok: true, arm: saved });
       }
       if (req.method === "GET" && url.pathname === "/vapidPublicKey") {
         return json({ publicKey: env.VAPID_PUBLIC_KEY || "" });
@@ -268,15 +344,12 @@ export default {
         };
         const key = "sub:" + id;
         await env.SUBS.put(key, JSON.stringify(rec));
+        if (body.shareArm && body.arm) {
+          await writeShared(env, Object.assign({}, rec.arm, { skipSlots: body.skipSlots, skipDate: body.skipDate, lines: rec.arm.lines }));
+        }
         const skip = Array.isArray(body.skipSlots) ? body.skipSlots.map(Number).filter(n => n >= 0) : [];
-        if (skip.length) {
-          const local = deviceNow(rec);
-          const slotList = slotsOf(rec.arm);
-          for (const mins of skip) {
-            const idx = slotList.findIndex(slot => mins === slot || (mins >= slot && mins <= slot + 2));
-            const mark = idx >= 0 ? String(idx) : String(mins);
-            await env.SUBS.put(`sent:${local.date}:${key}:${mark}`, "1", { expirationTtl: 48 * 3600 });
-          }
+        if (body.shareArm && skip.length) {
+          await markSkipAll(env, Object.assign({}, rec.arm, { skipSlots: skip, skipDate: rec.arm && rec.arm.skipDate }), rec);
         }
         return json({ ok: true, pic, id, skipped: skip });
       }
