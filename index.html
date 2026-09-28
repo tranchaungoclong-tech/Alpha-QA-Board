@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Inspection schedule" />
-  <title>Alpha QA — Inspection Board v92</title>
+  <title>Alpha QA — Inspection Board v96</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-180.png" />
@@ -378,6 +378,41 @@
     .year-block { margin-top: 18px; }
     .year-block h3 { margin: 0 0 8px; font-size: 14px; }
     footer { margin-top: 12px; color: var(--muted); font-size: 11px; }
+    .me-bar {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      margin: 0 0 10px; padding: 12px 16px;
+      background: #FFF7ED; border: 2px solid #F97316; border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+    .me-bar label { font-size: 15px; font-weight: 800; color: #9A3412; }
+    .me-bar select {
+      border: 2px solid #F97316; border-radius: 10px; padding: 8px 14px;
+      font: 800 16px "IBM Plex Sans", sans-serif; background: #fff; color: var(--ink);
+      min-width: 140px;
+    }
+    .me-bar .hint { display: none; }
+    .today-card {
+      margin: 0 0 12px; padding: 0; overflow: hidden;
+      border: 2px solid #1E3A5F; border-radius: 16px; box-shadow: var(--shadow);
+    }
+    .today-card h2 {
+      margin: 0; border: 0; padding: 14px 18px; font-size: 18px; font-weight: 800;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      cursor: pointer; user-select: none; background: #1E3A5F; color: #fff;
+    }
+    .today-card h2 .chev {
+      width: 24px; height: 24px; border-radius: 12px; background: rgba(255,255,255,.18);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 12px; color: #fff; flex: 0 0 auto;
+    }
+    .today-card.open h2 .chev { transform: rotate(90deg); }
+    .today-split { display: none; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px 16px; }
+    .today-card.open .today-split { display: grid; padding-top: 12px; }
+    .today-card.open h2 { border-bottom: 0; margin-bottom: 0; }
+    .today-col h3 { margin: 0 0 8px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    .today-col .job { margin-bottom: 6px; font-size: 14px; padding: 10px 10px 10px 12px; cursor: pointer; }
+    .today-col .job b { font-size: 16px; white-space: normal; }
+    .today-col .job.need { box-shadow: inset 0 0 0 2px #EAB308; background: #FFFBEB; }
     .cal-tools {
       display: flex; align-items: center; justify-content: flex-start; gap: 8px;
       margin-bottom: 10px;
@@ -534,6 +569,14 @@
       .weekdays, .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
       .weekdays span { font-size: 10px; padding-bottom: 2px; }
       .agenda { display: none; }
+      .today-card.open .today-split { grid-template-columns: 1fr; }
+      .today-card h2 { font-size: 16px; padding: 12px 14px; }
+      .me-bar { padding: 10px 12px; }
+      .me-bar label { font-size: 14px; }
+      .me-bar select { font-size: 15px; padding: 7px 12px; }
+      .today-col .job { font-size: 14px; padding: 10px 10px 10px 12px; overflow: visible; }
+      .today-col .job b { font-size: 16px; white-space: normal; overflow: visible; text-overflow: unset; }
+      .today-col .job .row { white-space: normal; overflow: visible; display: flex; }
       .cal-card { padding: 8px; }
       .day { min-height: 0; padding: 3px; border-radius: 6px; gap: 2px; overflow: hidden; }
       .day .num { font-size: 11px; }
@@ -619,7 +662,9 @@
       </div>
     </header>
 
+    <div class="me-bar" id="meBar"></div>
     <div class="filters" id="filters"></div>
+    <div class="today-card card" id="todayCard"></div>
 
     <div class="grid">
       <div class="main">
@@ -778,7 +823,7 @@
         </div>
       </div>
     </div>
-    <footer>v92. Client is a thin ring (nhẫn), not a pie. Live: github.io/Alpha-QA-Board/</footer>
+    <footer>v96. This phone + fold Today / Tomorrow. Live: github.io/Alpha-QA-Board/</footer>
   </div>
   <div id="bellToast" role="status" aria-live="polite"></div>
   <div class="day-pop" id="dayPop">
@@ -794,7 +839,7 @@
 
   <iframe name="qaFormSink" id="qaFormSink" title="form sink" style="position:absolute;width:0;height:0;border:0;visibility:hidden"></iframe>
   <script src="sheet-config.js?v=61"></script>
-  <script src="i18n.js?v=89"></script>
+  <script src="i18n.js?v=96"></script>
   <script>
     const PEOPLE = [
       { id: "philip", name: "Philip", color: "#FB7185" },
@@ -878,7 +923,10 @@
       { date: "2026-09-24", pic: "peter", days: 1, factory: "Evergreen", customer: "P01", type: "final", style: "P01", result: "pass", job: "P01-24", visit: 1 },
       { date: "2026-09-25", pic: "frank", days: 1, factory: "Mill 12", customer: "QVC", type: "final", style: "QVC", result: "pass", job: "QVC-25", visit: 1 },
       { date: "2026-09-28", pic: "elsa", days: 1, factory: "Ceramic VN", customer: "A74", type: "inline", style: "vase 4-item", result: "pass", job: "A74-4IT", visit: 1 },
+      { date: "2026-09-28", pic: "philip", days: 1, factory: "NP Pottery", customer: "A74", type: "final", style: "2nd leftover", result: "pending", job: "A74-NP-0928", visit: 1 },
+      { date: "2026-09-28", pic: "peter", days: 1, factory: "Mill 12", customer: "QVC", type: "final", style: "QVC", result: "pending", job: "QVC-0928", visit: 1 },
       { date: "2026-09-29", pic: "edith", days: 1, factory: "Evergreen", customer: "P01", type: "final", style: "P01", result: "pass", job: "P01-29", visit: 1 },
+      { date: "2026-09-29", pic: "philip", days: 1, factory: "Far Eastern", customer: "A93", type: "inline", style: "tray", result: "pending", job: "A93-FE-0929", visit: 1 },
       { date: "2026-09-02", pic: "edith", days: 1, factory: "WH North", customer: "A93", type: "inline", style: "carton", result: "pass", job: "A93-CTN", visit: 1 },
       { date: "2026-09-09", pic: "elsa", days: 1, factory: "Ceramic VN", customer: "A74", type: "inline", style: "vase", result: "fail", job: "A74-VN", visit: 1 },
       { date: "2026-09-19", pic: "philip", days: 1, factory: "A93 factory", customer: "A93", type: "final", style: "3rd party", result: "pending", job: "A93-3P", visit: 1 },
@@ -1013,6 +1061,124 @@
     let hitDate = "";
     const LS_CSV = "qa-board-csv";
     const LS_CSV_AT = "qa-board-csv-at";
+    const LS_ME = "qa-board-me";
+    function loadMe() {
+      try { return localStorage.getItem(LS_ME) || ""; } catch (e) { return ""; }
+    }
+    function saveMe(id) {
+      try {
+        if (id) localStorage.setItem(LS_ME, id);
+        else localStorage.removeItem(LS_ME);
+      } catch (e) {}
+    }
+    function addDaysIso(isoDate, n) {
+      const d = parse(isoDate);
+      d.setDate(d.getDate() + n);
+      return iso(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+    const LS_TODAY_OPEN = "qa-board-today-open";
+    function loadTodayOpen() {
+      try { return localStorage.getItem(LS_TODAY_OPEN) === "1"; } catch (e) { return false; }
+    }
+    function saveTodayOpen(on) {
+      try { localStorage.setItem(LS_TODAY_OPEN, on ? "1" : "0"); } catch (e) {}
+    }
+    function renderMeBar() {
+      const bar = $("meBar");
+      if (!bar) return;
+      const me = loadMe();
+      bar.innerHTML = `<label for="meSel">${t("pickMe")}</label>
+        <select id="meSel">
+          <option value="">${t("team")}</option>
+          ${PEOPLE.map(p => `<option value="${p.id}" ${me===p.id?"selected":""}>${p.name}</option>`).join("")}
+        </select>`;
+      $("meSel").onchange = e => {
+        saveMe(e.target.value);
+        render();
+      };
+    }
+    function isUnstamped(j) {
+      return resultValue(j.result) === "pending";
+    }
+    function todayJobCard(j) {
+      const p = pic(j.pic) || { name: j.pic, color: "#64748B" };
+      const el = document.createElement("div");
+      const sm = stampMeta(j.result);
+      const cur = resultValue(j.result);
+      const need = cur === "pending";
+      el.className = "job" + (need ? " need" : "");
+      el.style.background = TINT[j.pic] || "#F8FAFC";
+      el.style.borderLeftColor = p.color;
+      const dur = j.days === 1 ? "1d" : "½d";
+      const me = loadMe();
+      const who = me ? "" : `<div class="row">${p.name}</div>`;
+      const pendingLabel = t("stampAsk");
+      el.innerHTML = `<b>${j.factory} <span class="dur">(${dur})</span></b>
+        ${who}
+        <div class="row">${j.customer} · ${tType(j.type)} | <select class="stamp-sel ${sm.cls}" data-result="1" aria-label="${t("result")}">
+             <option value="pass"${cur === "pass" ? " selected" : ""}>${t("pass")}</option>
+             <option value="fail"${cur === "fail" ? " selected" : ""}>${t("fail")}</option>
+             <option value="pending"${cur === "pending" ? " selected" : ""}>${pendingLabel}</option>
+           </select></div>`;
+      const sel = el.querySelector("select.stamp-sel");
+      if (sel) {
+        sel.addEventListener("pointerup", ev => ev.stopPropagation());
+        sel.addEventListener("click", ev => ev.stopPropagation());
+        sel.addEventListener("change", ev => {
+          ev.stopPropagation();
+          if (sel.value !== j.result) setJobResult(j, sel.value);
+        });
+      }
+      el.addEventListener("pointerup", ev => {
+        if (ev.target.closest && ev.target.closest("select.stamp-sel")) return;
+        const all = JOBS.filter(x => x.date === j.date);
+        openDayPop(j.date, all, dayMeta(all));
+      });
+      return el;
+    }
+    function renderToday() {
+      const box = $("todayCard");
+      if (!box) return;
+      if (yearMode) { box.style.display = "none"; return; }
+      box.style.display = "";
+      const me = loadMe();
+      const mine = j => (!me || j.pic === me) && j.type !== "leave";
+      const dayJobs = isoDate => JOBS.filter(j => j.date === isoDate && mine(j))
+        .sort((a, b) => Number(isUnstamped(b)) - Number(isUnstamped(a)));
+      const todayList = dayJobs(TODAY);
+      const tomList = dayJobs(addDaysIso(TODAY, 1));
+      const open = loadTodayOpen();
+      box.classList.toggle("open", open);
+      box.innerHTML = `<h2 id="todayToggle">
+          <span class="chev">▶</span>
+          <span>${t("todayFold")}</span>
+        </h2>
+        <div class="today-split"></div>`;
+      $("todayToggle").onclick = () => {
+        const next = !loadTodayOpen();
+        saveTodayOpen(next);
+        box.classList.toggle("open", next);
+      };
+      const split = box.querySelector(".today-split");
+      const paint = (title, list, emptyKey) => {
+        const col = document.createElement("div");
+        col.className = "today-col";
+        const h = document.createElement("h3");
+        h.textContent = title;
+        col.appendChild(h);
+        if (!list.length) {
+          const empty = document.createElement("div");
+          empty.className = "day-pop-empty";
+          empty.textContent = t(emptyKey);
+          col.appendChild(empty);
+        } else {
+          list.forEach(j => col.appendChild(todayJobCard(j)));
+        }
+        split.appendChild(col);
+      };
+      paint(t("today"), todayList, "noToday");
+      paint(t("tomorrow"), tomList, "noTomorrow");
+    }
 
     const $ = id => document.getElementById(id);
     const pic = id => PEOPLE.find(p => p.id === id);
@@ -1351,8 +1517,16 @@
       if (!text || !text.trim()) throw new Error("empty");
       return text;
     }
+    function wantDemo() {
+      try { return /(?:^|[?&])demo=1(?:&|$)/.test(location.search); } catch (e) { return false; }
+    }
     async function loadJobs() {
       const src = $("dataSrc");
+      if (wantDemo()) {
+        JOBS = DEMO_JOBS.slice();
+        if (src) src.textContent = "local draft · demo jobs";
+        return;
+      }
       const url = String(window.SHEET_CSV || "").trim();
       if (!url) {
         JOBS = DEMO_JOBS.slice();
@@ -2203,7 +2377,9 @@
       $("yearName").textContent = view.y;
       renderYearMenu();
       $("monthBtn").textContent = yearMode ? t("yearWord") : SHORT()[view.m];
+      renderMeBar();
       renderFilters();
+      renderToday();
       if (yearMode) renderYearSummary();
       else renderCal();
       $("yearBtn").title = yearMode ? t("pickYear") : t("openYear");
