@@ -131,11 +131,10 @@ async function loadJobs(env) {
   return jobsFromCsv(await res.text());
 }
 
-function linesFor(jobs, arm) {
-  if (arm && Array.isArray(arm.lines) && arm.lines.length) return arm.lines.slice(0, 6);
-  const dayJobs = jobs || [];
+function linesFor(jobs) {
+  const dayJobs = (jobs || []).filter(j => j.type !== "leave");
   if (!dayJobs.length) return ["No inspect tomorrow."];
-  return dayJobs.filter(j => j.type !== "leave").slice(0, 6).map(j => {
+  return dayJobs.slice(0, 6).map(j => {
     const type = j.type ? j.type[0].toUpperCase() + j.type.slice(1) : "Visit";
     return `${j.pic} · ${j.factory || "-"} · ${j.customer || "-"} · ${type}`;
   });
@@ -206,7 +205,7 @@ async function writeShared(env, arm) {
     times: Number(arm.times) || 1,
     who: String(arm.who || "all"),
     conflict: arm.conflict !== false,
-    lines: Array.isArray(arm.lines) ? arm.lines.slice(0, 8) : [],
+    lines: [],
     skipSlots: Array.isArray(arm.skipSlots) ? arm.skipSlots.map(Number).filter(n => n >= 0) : [],
     skipDate: String(arm.skipDate || ""),
     at: new Date().toISOString()
@@ -247,7 +246,7 @@ async function fireFor(env, rec, key, jobs, force, armIn) {
     if (who && who !== "all" && j.pic !== who) return false;
     return true;
   });
-  const lines = linesFor(mine, arm);
+  const lines = linesFor(mine);
   const body = lines.join("\n");
   try {
     const ok = await sendOne(env, rec, "QA Board · tomorrow", body, tomorrow);
@@ -318,7 +317,7 @@ export default {
           times: Number(body.times) || 1,
           who: String(body.who || "all"),
           conflict: body.conflict !== false,
-          lines: Array.isArray(body.lines) ? body.lines : [],
+          lines: [],
           skipSlots: Array.isArray(body.skipSlots) ? body.skipSlots : [],
           skipDate: String(body.skipDate || "")
         };
